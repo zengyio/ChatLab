@@ -5,6 +5,8 @@
  * 开发阶段运行方式：pnpm --filter chatlab cli -- sessions
  */
 
+import * as fs from 'fs'
+import * as path from 'path'
 import { Command } from 'commander'
 import { loadConfig, getConfigPath } from '@openchatlab/config'
 import { NodePathProvider, DatabaseManager } from '@openchatlab/node-runtime'
@@ -227,12 +229,24 @@ configCmd
 
 // --- 工具函数 ---
 
+/**
+ * 查找独立编译的 better-sqlite3 原生模块路径。
+ * 在非 Electron 环境下使用，避免与 electron-rebuild 冲突。
+ */
+function resolveNativeBinding(): string | undefined {
+  if (process.versions.electron) return undefined
+  const nativePath = path.resolve(__dirname, '../native/better_sqlite3.node')
+  if (fs.existsSync(nativePath)) return nativePath
+  return undefined
+}
+
 function initRuntime() {
   const config = loadConfig()
   const dataDir = config.data.dir || undefined
   const pathProvider = new NodePathProvider(dataDir)
   pathProvider.ensureAllDirs()
-  const dbManager = new DatabaseManager(pathProvider)
+  const nativeBinding = resolveNativeBinding()
+  const dbManager = new DatabaseManager(pathProvider, { nativeBinding })
   return { config, pathProvider, dbManager }
 }
 

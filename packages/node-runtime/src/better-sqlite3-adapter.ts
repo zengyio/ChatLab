@@ -61,13 +61,17 @@ export class BetterSqliteAdapter implements DatabaseAdapter {
 
 /**
  * 从文件路径打开数据库并返回适配器
+ *
+ * @param options.nativeBinding - 指定 better-sqlite3 原生模块路径，
+ *   用于在独立 Node.js 环境中加载与 Electron 隔离的二进制。
  */
 export function openBetterSqliteDatabase(
   filePath: string,
-  options?: { readonly?: boolean }
+  options?: { readonly?: boolean; nativeBinding?: string }
 ): BetterSqliteAdapter {
   const db = new Database(filePath, {
     readonly: options?.readonly ?? false,
+    nativeBinding: options?.nativeBinding,
   })
   db.pragma('journal_mode = WAL')
   return new BetterSqliteAdapter(db)

@@ -14,8 +14,14 @@ import { openBetterSqliteDatabase } from './better-sqlite3-adapter'
 
 export class DatabaseManager {
   private cache = new Map<string, DatabaseAdapter>()
+  private nativeBinding?: string
 
-  constructor(private pathProvider: PathProvider) {}
+  constructor(
+    private pathProvider: PathProvider,
+    options?: { nativeBinding?: string }
+  ) {
+    this.nativeBinding = options?.nativeBinding
+  }
 
   /**
    * 打开指定会话的数据库（带缓存）
@@ -30,6 +36,7 @@ export class DatabaseManager {
 
     const adapter = openBetterSqliteDatabase(dbPath, {
       readonly: options?.readonly ?? true,
+      nativeBinding: this.nativeBinding,
     })
     this.cache.set(sessionId, adapter)
     return adapter
