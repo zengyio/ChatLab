@@ -200,6 +200,65 @@ program
     dbManager.closeAll()
   })
 
+// chatlab import <file> - 导入聊天记录
+program
+  .command('import <file>')
+  .description('导入聊天记录文件（支持 ChatLab JSON / JSONL 格式）')
+  .option('--session-id <id>', '指定会话 ID（不指定则自动生成，已存在则增量导入）')
+  .option('--dry-run', '试运行，不实际写入', false)
+  .action(async (file, options) => {
+    if (!fs.existsSync(file)) {
+      console.error(`文件不存在: ${file}`)
+      process.exit(1)
+    }
+
+    const { parseFile, importData } = await import('./import')
+    const { dbManager } = initRuntime()
+
+    console.log(`解析文件: ${file}`)
+    try {
+      const data = await parseFile(file, (processed, total) => {
+        const pct = total > 0 ? Math.round((processed / total) * 100) : 0
+        process.stdout.write(`\r  解析进度: ${pct}%`)
+      })
+      console.log(`\n  解析完成: ${data.messages.length} 条消息, ${data.members.length} 个成员`)
+
+      if (options.dryRun) {
+        console.log(`\n[试运行] 将${options.sessionId ? '增量导入到 ' + options.sessionId : '创建新会话'}`)
+        console.log(`  消息数: ${data.messages.length}`)
+        console.log(`  成员数: ${data.members.length}`)
+        dbManager.closeAll()
+        return
+      }
+
+      const nativeBinding = resolveNativeBinding()
+      const result = await importData(dbManager, data, {
+        sessionId: options.sessionId,
+        nativeBinding,
+        onProgress: (msg) => console.log(`  ${msg}`),
+      })
+
+      if (result.success) {
+        console.log(`\n导入成功!`)
+        console.log(`  会话 ID: ${result.sessionId}`)
+        console.log(`  ${result.created ? '新建' : '增量'}导入`)
+        console.log(`  写入消息: ${result.messageCount}`)
+        console.log(`  成员数: ${result.memberCount}`)
+        if (result.duplicateCount > 0) {
+          console.log(`  重复跳过: ${result.duplicateCount}`)
+        }
+      } else {
+        console.error(`\n导入失败: ${result.error}`)
+        process.exit(1)
+      }
+    } catch (err) {
+      console.error(`\n导入错误: ${err instanceof Error ? err.message : err}`)
+      process.exit(1)
+    } finally {
+      dbManager.closeAll()
+    }
+  })
+
 // chatlab mcp - MCP Server
 program
   .command('mcp')
