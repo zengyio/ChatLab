@@ -50,7 +50,7 @@ function chatlabServePlugin(): Plugin {
       }
 
       const serverDir = resolve(__dirname, 'packages/server')
-      serverProcess = spawn('npx', ['tsx', 'src/cli.ts', 'serve', '--port', String(BACKEND_PORT)], {
+      serverProcess = spawn('npx', ['tsx', 'watch', 'src/cli.ts', 'serve', '--port', String(BACKEND_PORT)], {
         cwd: serverDir,
         stdio: ['ignore', 'pipe', 'pipe'],
         env: { ...process.env },
@@ -134,6 +134,11 @@ export default defineConfig({
     proxy: {
       '/_web': `http://localhost:${BACKEND_PORT}`,
       '/api': `http://localhost:${BACKEND_PORT}`,
+      '/_proxy/chatlab.fun': {
+        target: 'https://chatlab.fun',
+        changeOrigin: true,
+        rewrite: (p: string) => p.replace(/^\/_proxy\/chatlab\.fun/, ''),
+      },
     },
   },
 })

@@ -7,7 +7,8 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useAssistantStore } from './assistant'
 
-const CLOUD_MARKET_BASE_URL = 'https://chatlab.fun'
+import { CHATLAB_SITE_BASE } from '@/utils/chatlabSiteLocale'
+const CLOUD_MARKET_BASE_URL = CHATLAB_SITE_BASE
 const LOCALE_PATH_MAP: Record<string, string> = { 'zh-CN': 'cn', 'zh-TW': 'cn', 'en-US': 'en', 'ja-JP': 'ja' }
 
 export interface SkillSummary {

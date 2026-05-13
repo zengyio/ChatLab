@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getChatlabSiteLocalePath, getChatlabSiteLangQuery } from '@/utils/chatlabSiteLocale'
+import { CHATLAB_SITE_BASE, getChatlabSiteLocalePath, getChatlabSiteLangQuery } from '@/utils/chatlabSiteLocale'
 import { IS_ELECTRON } from '@/utils/platform'
 
 const emit = defineEmits<{
@@ -11,12 +11,10 @@ const emit = defineEmits<{
 
 const { t, locale } = useI18n()
 
-// 配置 URL 根据语言动态获取
-const CONFIG_BASE_URL = 'https://chatlab.fun'
 const configUrl = computed(() => {
   const localePath = getChatlabSiteLocalePath(locale.value)
   const langPath = localePath ? `/${localePath}` : ''
-  return `${CONFIG_BASE_URL}${langPath}/config.json`
+  return `${CHATLAB_SITE_BASE}${langPath}/config.json`
 })
 
 // 存储 key 也根据语言区分

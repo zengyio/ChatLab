@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getChatlabSiteLocalePath } from '@/utils/chatlabSiteLocale'
+import { CHATLAB_SITE_BASE, getChatlabSiteLocalePath } from '@/utils/chatlabSiteLocale'
 import { storeToRefs } from 'pinia'
 import { useSettingsStore } from '@/stores/settings'
 import { sanitizeSummary } from '@/utils/sanitizeSummary'
@@ -88,7 +88,7 @@ const changelogs = ref<ChangelogItem[]>([])
 function getChangelogUrl(lang: string) {
   const localePath = getChatlabSiteLocalePath(lang)
   const langPath = localePath || 'en'
-  return `https://chatlab.fun/changelogs/${langPath}.json`
+  return `${CHATLAB_SITE_BASE}/changelogs/${langPath}.json`
 }
 
 // 从服务端获取 changelog 数据

@@ -175,8 +175,105 @@ async function getAllRecentMessages(
   return { messages: messages.reverse(), total }
 }
 
+// ==================== window.sessionApi 垫片 ====================
+
+async function sessionGetStats(
+  adapter: QueryAdapter,
+  sessionId: string
+): Promise<{ hasIndex: boolean; sessionCount: number; gapThreshold: number }> {
+  try {
+    const rows = await pq<{ cnt: number }>(adapter, sessionId, 'SELECT COUNT(*) as cnt FROM chat_session', [])
+    const count = rows[0]?.cnt ?? 0
+    return { hasIndex: count > 0, sessionCount: count, gapThreshold: 1800 }
+  } catch {
+    return { hasIndex: false, sessionCount: 0, gapThreshold: 1800 }
+  }
+}
+
+async function sessionGenerate(adapter: QueryAdapter, sessionId: string, gapThreshold: number = 1800): Promise<number> {
+  const messages = await pq<{ id: number; ts: number }>(
+    adapter,
+    sessionId,
+    'SELECT id, ts FROM message ORDER BY ts ASC',
+    []
+  )
+
+  if (messages.length === 0) return 0
+
+  type Session = { startTs: number; endTs: number; count: number }
+  const sessions: Session[] = []
+  let current: Session = { startTs: messages[0].ts, endTs: messages[0].ts, count: 1 }
+
+  for (let i = 1; i < messages.length; i++) {
+    const gap = messages[i].ts - messages[i - 1].ts
+    if (gap > gapThreshold) {
+      sessions.push(current)
+      current = { startTs: messages[i].ts, endTs: messages[i].ts, count: 1 }
+    } else {
+      current.endTs = messages[i].ts
+      current.count++
+    }
+  }
+  sessions.push(current)
+
+  // 写入数据库: 先清空再插入（通过后端 pluginQuery 只支持只读，需要后端端点）
+  // 这里通过 FetchAdapter 调用后端的 generate 端点
+  const resp = await fetch(`/_web/sessions/${sessionId}/generate-index`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ gapThreshold }),
+  })
+  if (!resp.ok) throw new Error(`Failed to generate session index: ${resp.status}`)
+  const result = (await resp.json()) as { sessionCount: number }
+  return result.sessionCount
+}
+
+async function sessionGetSessions(
+  adapter: QueryAdapter,
+  sessionId: string
+): Promise<Array<{ id: number; startTs: number; endTs: number; messageCount: number; summary: string | null }>> {
+  return pq(
+    adapter,
+    sessionId,
+    'SELECT id, start_ts as startTs, end_ts as endTs, message_count as messageCount, summary FROM chat_session ORDER BY start_ts ASC',
+    []
+  )
+}
+
+async function sessionHasIndex(adapter: QueryAdapter, sessionId: string): Promise<boolean> {
+  const stats = await sessionGetStats(adapter, sessionId)
+  return stats.hasIndex
+}
+
+async function sessionGetByTimeRange(
+  adapter: QueryAdapter,
+  sessionId: string,
+  startTs: number,
+  endTs: number
+): Promise<Array<{ id: number; startTs: number; endTs: number; messageCount: number; summary: string | null }>> {
+  return pq(
+    adapter,
+    sessionId,
+    'SELECT id, start_ts as startTs, end_ts as endTs, message_count as messageCount, summary FROM chat_session WHERE start_ts >= ? AND end_ts <= ? ORDER BY start_ts ASC',
+    [startTs, endTs]
+  )
+}
+
+async function sessionGetRecent(
+  adapter: QueryAdapter,
+  sessionId: string,
+  limit: number
+): Promise<Array<{ id: number; startTs: number; endTs: number; messageCount: number; summary: string | null }>> {
+  return pq(
+    adapter,
+    sessionId,
+    'SELECT id, start_ts as startTs, end_ts as endTs, message_count as messageCount, summary FROM chat_session ORDER BY start_ts DESC LIMIT ?',
+    [limit]
+  )
+}
+
 /**
- * 注入 window.chatApi 和 window.aiApi 垫片
+ * 注入 window.chatApi / window.aiApi / window.sessionApi 垫片
  */
 export function installWebApiShims(adapter: QueryAdapter): void {
   if (!window.chatApi) {
@@ -227,4 +324,25 @@ export function installWebApiShims(adapter: QueryAdapter): void {
   ) => searchMessages(adapter, sid, kw, filter, limit, offset, senderId)
   aiApi.getAllRecentMessages = (sid: string, filter?: any, limit?: number) =>
     getAllRecentMessages(adapter, sid, filter, limit)
+
+  // ===== window.sessionApi 垫片 =====
+  if (!(window as any).sessionApi) {
+    ;(window as any).sessionApi = {}
+  }
+  const sessionApi = (window as any).sessionApi
+  sessionApi.getStats = (sid: string) => sessionGetStats(adapter, sid)
+  sessionApi.generate = (sid: string, gap?: number) => sessionGenerate(adapter, sid, gap)
+  sessionApi.hasIndex = (sid: string) => sessionHasIndex(adapter, sid)
+  sessionApi.clear = async (sid: string) => {
+    await fetch(`/_web/sessions/${sid}/clear-index`, { method: 'POST' })
+    return true
+  }
+  sessionApi.getSessions = (sid: string) => sessionGetSessions(adapter, sid)
+  sessionApi.getByTimeRange = (sid: string, start: number, end: number) =>
+    sessionGetByTimeRange(adapter, sid, start, end)
+  sessionApi.getRecent = (sid: string, limit: number) => sessionGetRecent(adapter, sid, limit)
+  sessionApi.updateGapThreshold = async () => true
+  sessionApi.generateSummary = async () => ({ success: false, error: 'Not available in web mode' })
+  sessionApi.generateSummaries = async () => ({ success: 0, failed: 0, skipped: 0 })
+  sessionApi.checkCanGenerateSummary = async () => ({})
 }

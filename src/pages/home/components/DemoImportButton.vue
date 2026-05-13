@@ -6,6 +6,7 @@ import { useSessionStore } from '@/stores/session'
 import { useSettingsStore } from '@/stores/settings'
 import { getChatlabSiteLocalePath } from '@/utils/chatlabSiteLocale'
 import { getAdapter } from '@/adapters'
+import { IS_ELECTRON } from '@/utils/platform'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -25,6 +26,11 @@ async function navigateToSession(sessionId: string) {
 }
 
 async function handleImport() {
+  if (!IS_ELECTRON) {
+    error.value = t('home.demo.notAvailableInWeb', 'Demo 导入功能暂仅在桌面端可用')
+    return
+  }
+
   isImporting.value = true
   error.value = null
   stage.value = 'downloading'
