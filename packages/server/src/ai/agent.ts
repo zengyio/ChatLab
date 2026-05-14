@@ -1,21 +1,22 @@
 /**
  * 服务端 Agent
  *
- * 使用 @mariozechner/pi-agent-core 编排对话流程，
+ * 使用 @openchatlab/node-runtime 的 runAgentCore 编排对话流程，
  * 将流式事件通过回调输出给 SSE 端点。
  */
 
-import { Agent as PiAgentCore } from '@mariozechner/pi-agent-core'
-import type { AgentEvent as PiAgentEvent } from '@mariozechner/pi-agent-core'
 import {
-  type Message as PiMessage,
-  type Usage as PiUsage,
-  streamSimple,
+  runAgentCore,
   completeSimple,
-  type TextContent as PiTextContent,
-} from '@mariozechner/pi-ai'
-import type { AIConversationManager, CompressionConfig, CompressionLlmAdapter } from '@openchatlab/node-runtime'
-import { checkAndCompress } from '@openchatlab/node-runtime'
+  checkAndCompress,
+  type AgentCoreEvent,
+  type SimpleHistoryMessage,
+  type AIConversationManager,
+  type CompressionConfig,
+  type CompressionLlmAdapter,
+  type PiTextContent,
+  type AgentTool,
+} from '@openchatlab/node-runtime'
 
 import { getDefaultAssistantConfig, buildPiModel } from './llm-config'
 
@@ -46,14 +47,12 @@ export interface RunAgentOptions {
   assistantSystemPrompt?: string
   skillMenu?: string | null
   compressionConfig?: CompressionConfig
-  tools?: import('@mariozechner/pi-agent-core').AgentTool[]
+  tools?: AgentTool[]
   aiDataDir: string
   convManager: AIConversationManager
   onEvent: (event: AgentStreamEvent) => void
   abortSignal?: AbortSignal
 }
-
-type SimpleHistoryMessage = { role: 'user' | 'assistant' | 'summary'; content: string }
 
 function buildSystemPrompt(
   _chatType: 'group' | 'private',
@@ -95,37 +94,50 @@ ${responseNote}`
   return prompt
 }
 
-function createEmptyPiUsage(): PiUsage {
-  return {
-    input: 0,
-    output: 0,
-    cacheRead: 0,
-    cacheWrite: 0,
-    totalTokens: 0,
-    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+function mapCoreEventToStream(
+  event: AgentCoreEvent,
+  onEvent: (event: AgentStreamEvent) => void,
+  toolsUsedCount: { value: number },
+  currentRound: { value: number }
+): void {
+  switch (event.type) {
+    case 'content':
+      onEvent({ type: 'content', content: event.content })
+      break
+    case 'thinking_start':
+      onEvent({
+        type: 'status',
+        status: { phase: 'thinking', round: currentRound.value, toolsUsed: toolsUsedCount.value },
+      })
+      break
+    case 'thinking_delta':
+      onEvent({ type: 'think', content: event.content, thinkTag: 'thinking' })
+      break
+    case 'thinking_end':
+      onEvent({ type: 'think', content: '', thinkTag: 'thinking', thinkDurationMs: event.durationMs })
+      break
+    case 'tool_start':
+      toolsUsedCount.value += 1
+      onEvent({ type: 'tool_start', toolName: event.toolName, toolParams: event.toolParams })
+      onEvent({
+        type: 'status',
+        status: {
+          phase: 'tool_running',
+          round: currentRound.value,
+          toolsUsed: toolsUsedCount.value,
+          currentTool: event.toolName,
+        },
+      })
+      break
+    case 'tool_end':
+      onEvent({ type: 'tool_result', toolName: event.toolName, toolResult: event.toolResult })
+      break
+    case 'turn_end':
+      currentRound.value = event.round
+      break
+    case 'usage_update':
+      break
   }
-}
-
-function toPiHistoryMessages(messages: SimpleHistoryMessage[]): PiMessage[] {
-  return messages.map((msg): PiMessage => {
-    if (msg.role === 'user') {
-      return {
-        role: 'user',
-        content: [{ type: 'text', text: msg.content || '' }],
-        timestamp: Date.now(),
-      }
-    }
-    return {
-      role: 'assistant',
-      content: [{ type: 'text', text: msg.content || '' }],
-      api: 'openai-completions',
-      provider: 'chatlab',
-      model: 'unknown',
-      usage: createEmptyPiUsage(),
-      stopReason: 'stop',
-      timestamp: Date.now(),
-    }
-  })
 }
 
 export async function runServerAgent(options: RunAgentOptions): Promise<void> {
@@ -152,15 +164,13 @@ export async function runServerAgent(options: RunAgentOptions): Promise<void> {
   }
 
   const piModel = buildPiModel(llmConfig)
-  const maxToolRounds = 5
-
   const systemPrompt = buildSystemPrompt(chatType, assistantSystemPrompt, locale, skillMenu)
 
   if (compressionConfig?.enabled) {
-    onEvent({ type: 'status', status: { phase: 'compressing', round: 0, toolsUsed: 0 } })
     const llmAdapter: CompressionLlmAdapter = {
       contextWindow: piModel.contextWindow ?? 128000,
       compress: async (prompt: string, maxTokens: number) => {
+        onEvent({ type: 'status', status: { phase: 'compressing', round: 0, toolsUsed: 0 } })
         try {
           const result = await completeSimple(
             piModel,
@@ -191,39 +201,11 @@ export async function runServerAgent(options: RunAgentOptions): Promise<void> {
       onEvent({ type: 'status', status: { phase: 'compression_done', round: 0, toolsUsed: 0 } })
     }
   }
-  const totalUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
-  const toolsUsed: string[] = []
-  let toolRounds = 0
 
-  const addPiUsage = (usage?: PiUsage) => {
-    if (!usage) return
-    totalUsage.promptTokens += usage.input || 0
-    totalUsage.completionTokens += usage.output || 0
-    totalUsage.totalTokens += usage.totalTokens || usage.input + usage.output || 0
-  }
-
-  const isAborted = () => abortSignal?.aborted ?? false
-
-  if (isAborted()) {
-    onEvent({ type: 'done', isFinished: true, usage: totalUsage })
+  if (abortSignal?.aborted) {
+    onEvent({ type: 'done', isFinished: true, usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 } })
     return
   }
-
-  const coreAgent = new PiAgentCore({
-    initialState: {
-      model: piModel,
-      thinkingLevel: piModel.reasoning ? 'medium' : 'off',
-    },
-    getApiKey: () => llmConfig.apiKey,
-    streamFn: streamSimple,
-    convertToLlm: (messages) =>
-      messages.filter(
-        (msg): msg is PiMessage => msg.role === 'user' || msg.role === 'assistant' || msg.role === 'toolResult'
-      ),
-  })
-
-  coreAgent.setSystemPrompt(systemPrompt)
-  coreAgent.setTools(maxToolRounds > 0 ? tools : [])
 
   let history: SimpleHistoryMessage[] = []
   try {
@@ -231,90 +213,40 @@ export async function runServerAgent(options: RunAgentOptions): Promise<void> {
   } catch {
     // empty history on failure
   }
-  coreAgent.replaceMessages(toPiHistoryMessages(history))
 
-  onEvent({
-    type: 'status',
-    status: { phase: 'preparing', round: 0, toolsUsed: 0 },
-  })
+  const toolsUsedCount = { value: 0 }
+  const currentRound = { value: 0 }
 
-  // Subscribe to events
-  let hasReachedToolRoundLimit = false
-  const thinkingStartTime = new Map<number, number>()
-
-  const unsubscribe = coreAgent.subscribe((event: PiAgentEvent) => {
-    if (event.type === 'message_update') {
-      const update = event.assistantMessageEvent
-      if (update.type === 'text_delta') {
-        onEvent({ type: 'content', content: update.delta })
-      } else if (update.type === 'thinking_start') {
-        thinkingStartTime.set(update.contentIndex, Date.now())
-        onEvent({ type: 'status', status: { phase: 'thinking', round: toolRounds, toolsUsed: toolsUsed.length } })
-      } else if (update.type === 'thinking_delta') {
-        onEvent({ type: 'think', content: update.delta, thinkTag: 'thinking' })
-      } else if (update.type === 'thinking_end') {
-        const startedAt = thinkingStartTime.get(update.contentIndex)
-        const durationMs = startedAt ? Date.now() - startedAt : undefined
-        onEvent({ type: 'think', content: '', thinkTag: 'thinking', thinkDurationMs: durationMs })
-        thinkingStartTime.delete(update.contentIndex)
-      }
-    } else if (event.type === 'tool_execution_start') {
-      toolsUsed.push(event.toolName)
-      onEvent({
-        type: 'tool_start',
-        toolName: event.toolName,
-        toolParams: (event.args || {}) as Record<string, unknown>,
-      })
-      onEvent({
-        type: 'status',
-        status: { phase: 'tool_running', round: toolRounds, toolsUsed: toolsUsed.length, currentTool: event.toolName },
-      })
-    } else if (event.type === 'tool_execution_end') {
-      onEvent({ type: 'tool_result', toolName: event.toolName, toolResult: event.result })
-    } else if (event.type === 'turn_end') {
-      if (event.toolResults.length > 0) {
-        toolRounds += 1
-        if (!hasReachedToolRoundLimit && maxToolRounds > 0 && toolRounds >= maxToolRounds) {
-          hasReachedToolRoundLimit = true
-          coreAgent.setTools([])
-          coreAgent.steer({
-            role: 'user',
-            content: [{ type: 'text', text: 'Please provide your final answer based on the information gathered.' }],
-            timestamp: Date.now(),
-          } as PiMessage)
-        }
-      }
-    } else if (event.type === 'message_end') {
-      if (event.message.role === 'assistant') {
-        addPiUsage(event.message.usage)
-      }
-    }
-  })
-
-  const forwardAbort = () => coreAgent.abort()
-  if (abortSignal) {
-    abortSignal.addEventListener('abort', forwardAbort, { once: true })
-  }
+  onEvent({ type: 'status', status: { phase: 'preparing', round: 0, toolsUsed: 0 } })
 
   try {
-    await coreAgent.prompt(userMessage)
+    const result = await runAgentCore({
+      piModel,
+      apiKey: llmConfig.apiKey,
+      systemPrompt,
+      tools,
+      history,
+      userMessage,
+      maxToolRounds: 5,
+      abortSignal,
+      onEvent: (coreEvent) => mapCoreEventToStream(coreEvent, onEvent, toolsUsedCount, currentRound),
+      onDebugContext: (messages) => {
+        try {
+          convManager.setPendingDebugContext(conversationId, JSON.stringify(messages, null, 2))
+        } catch {
+          // silent
+        }
+      },
+    })
 
-    if (coreAgent.state.error) {
-      onEvent({
-        type: 'error',
-        error: { name: 'AgentError', message: coreAgent.state.error },
-      })
+    if (result.error) {
+      onEvent({ type: 'error', error: { name: 'AgentError', message: result.error } })
     }
 
-    onEvent({ type: 'done', isFinished: true, usage: totalUsage })
+    onEvent({ type: 'done', isFinished: true, usage: result.usage })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
     onEvent({ type: 'error', error: { name: 'AgentError', message: msg } })
-    onEvent({ type: 'done', isFinished: true, usage: totalUsage })
-  } finally {
-    unsubscribe()
-    if (abortSignal) {
-      abortSignal.removeEventListener('abort', forwardAbort)
-    }
+    onEvent({ type: 'done', isFinished: true, usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 } })
   }
 }

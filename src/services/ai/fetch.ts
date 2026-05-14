@@ -126,17 +126,17 @@ export class FetchAIAdapter implements AIAdapter {
     return () => {}
   }
 
-  // ===== 调试 (降级) =====
-  async executeAiSQL(_sql: string): Promise<AiSQLResult> {
-    return { columns: [], rows: [], rowCount: 0, duration: 0, limited: false }
+  // ===== 调试 =====
+  async executeAiSQL(sql: string): Promise<AiSQLResult> {
+    return post<AiSQLResult>('/ai/debug/execute-sql', { sql })
   }
 
   async getAiSchema(): Promise<AiSchemaTable[]> {
-    return []
+    return get<AiSchemaTable[]>('/ai/debug/schema')
   }
 
   async clearDebugContext(): Promise<{ success: boolean; cleared: number }> {
-    return { success: false, cleared: 0 }
+    return post<{ success: boolean; cleared: number }>('/ai/debug/clear-debug-context', {})
   }
 
   // ===== 工具 =====

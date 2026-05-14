@@ -9,7 +9,7 @@
 
 import * as fs from 'fs'
 import * as path from 'path'
-import { type Model as PiModel, type Api as PiApi } from '@mariozechner/pi-ai'
+import type { PiModel, PiApi } from '@openchatlab/node-runtime'
 import { BUILTIN_PROVIDERS, getBuiltinModelsByProvider, BUILTIN_MODELS } from '@openchatlab/core'
 import type { ModelDefinition } from '@openchatlab/core'
 import { resolveApiKey, writeAuthProfile } from '@openchatlab/config'

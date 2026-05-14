@@ -1,7 +1,7 @@
 /**
  * AI 模块（Node.js 实现）
  *
- * 助手/技能 MD 文件解析器、共享类型、对话管理。
+ * 助手/技能 MD 文件解析器、共享类型、对话管理、Agent Core。
  */
 
 export type { AssistantConfig, AssistantSummary, SkillDef, SkillSummary } from './types'
@@ -52,3 +52,21 @@ export {
   i18nTexts,
   t,
 } from './preprocessor'
+
+// Agent Core
+export type { AgentCoreOptions, AgentCoreEvent, AgentCoreResult, AgentTokenUsage, SimpleHistoryMessage } from './agent'
+export { runAgentCore } from './agent'
+
+// Re-exports from @mariozechner/pi-agent-core
+export type { AgentTool, AgentToolResult } from '@mariozechner/pi-agent-core'
+
+// Re-exports from @mariozechner/pi-ai
+export { Type, completeSimple, streamSimple } from '@mariozechner/pi-ai'
+export type {
+  Model as PiModel,
+  Api as PiApi,
+  Message as PiMessage,
+  Usage as PiUsage,
+  TextContent as PiTextContent,
+  AssistantMessage as PiAssistantMessage,
+} from '@mariozechner/pi-ai'

@@ -76,3 +76,12 @@ export type {
   TokenUsageData,
   ConversationManagerLogger,
 } from './ai'
+
+// Agent Core
+export type { AgentCoreOptions, AgentCoreEvent, AgentCoreResult, AgentTokenUsage, SimpleHistoryMessage } from './ai'
+export { runAgentCore } from './ai'
+
+// Re-exports: @mariozechner/pi-agent-core & @mariozechner/pi-ai
+export type { AgentTool, AgentToolResult } from './ai'
+export { Type, completeSimple, streamSimple } from './ai'
+export type { PiModel, PiApi, PiMessage, PiUsage, PiTextContent, PiAssistantMessage } from './ai'

@@ -5,7 +5,6 @@
  * 消息类工具返回 rawMessages 时自动执行预处理管道（清洗、去噪、脱敏、截断、格式化）。
  */
 
-import type { AgentTool, AgentToolResult } from '@mariozechner/pi-agent-core'
 import type { ToolDefinition, ToolExecutionContext } from '@openchatlab/tools'
 import type { DatabaseAdapter } from '@openchatlab/core'
 import {
@@ -14,6 +13,8 @@ import {
   truncateFormattedMessages,
   formatToolResultAsText,
   countTokens,
+  type AgentTool,
+  type AgentToolResult,
   type PreprocessableMessage,
   type TruncationStrategy,
 } from '@openchatlab/node-runtime'

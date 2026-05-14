@@ -600,4 +600,39 @@ export function registerAiRoutes(
     }
     return { success: false }
   })
+
+  // ==================== Debug SQL ====================
+
+  server.get('/_web/ai/debug/schema', async (_request, reply) => {
+    if (!convManager) {
+      return reply.code(503).send({ error: 'AI conversation manager not available' })
+    }
+    return convManager.getAiSchema()
+  })
+
+  server.post<{
+    Body: { sql: string }
+  }>('/_web/ai/debug/execute-sql', async (request, reply) => {
+    if (!convManager) {
+      return reply.code(503).send({ error: 'AI conversation manager not available' })
+    }
+    const { sql } = request.body
+    if (!sql || typeof sql !== 'string') {
+      return reply.code(400).send({ error: 'sql is required' })
+    }
+    try {
+      return convManager.executeAiSQL(sql)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      return reply.code(400).send({ error: msg })
+    }
+  })
+
+  server.post('/_web/ai/debug/clear-debug-context', async (_request, reply) => {
+    if (!convManager) {
+      return reply.code(503).send({ error: 'AI conversation manager not available' })
+    }
+    const cleared = convManager.clearAllDebugContext()
+    return { success: true, cleared }
+  })
 }

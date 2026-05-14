@@ -1115,21 +1115,6 @@ export function registerAIHandlers({ win }: IpcContext): void {
         // 上下文压缩前置步骤（在 Agent 创建之前执行）
         if (compressionConfig?.enabled && context.conversationId) {
           try {
-            win.webContents.send('agent:streamChunk', {
-              requestId,
-              chunk: {
-                type: 'status',
-                status: {
-                  phase: 'compressing',
-                  round: 0,
-                  toolsUsed: 0,
-                  contextTokens: 0,
-                  totalUsage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
-                  updatedAt: Date.now(),
-                } satisfies import('@electron/shared/types').AgentRuntimeStatus,
-              },
-            })
-
             // 获取助手 systemPrompt 用于 token 计算
             const tempAssistantConfig = assistantId
               ? (assistantManager.getAssistantConfig(assistantId) ?? undefined)
@@ -1140,7 +1125,23 @@ export function registerAIHandlers({ win }: IpcContext): void {
               context.conversationId,
               compressionConfig,
               systemPromptForCompression,
-              activeAIConfig
+              activeAIConfig,
+              () => {
+                win.webContents.send('agent:streamChunk', {
+                  requestId,
+                  chunk: {
+                    type: 'status',
+                    status: {
+                      phase: 'compressing',
+                      round: 0,
+                      toolsUsed: 0,
+                      contextTokens: 0,
+                      totalUsage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+                      updatedAt: Date.now(),
+                    } satisfies import('@electron/shared/types').AgentRuntimeStatus,
+                  },
+                })
+              }
             )
 
             aiLogger.info('IPC', `Compression result for ${requestId}`, compressionResult)

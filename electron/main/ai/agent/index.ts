@@ -1,6 +1,6 @@
 /**
  * AI Agent 执行器
- * 编排 PiAgentCore 的对话流程（工具调用、流式输出、中止控制）
+ * 编排 runAgentCore 的对话流程（工具调用、流式输出、中止控制）
  */
 
 import { getDefaultAssistantConfig, buildPiModel } from '../llm'
@@ -9,13 +9,14 @@ import type { ToolContext } from '../tools/types'
 import { getHistoryForAgent, setPendingDebugContext } from '../conversations'
 import { aiLogger, isDebugMode } from '../logger'
 import { t as i18nT } from '../../i18n'
-import { Agent as PiAgentCore } from '@mariozechner/pi-agent-core'
 import {
-  type AssistantMessage as PiAssistantMessage,
-  type Message as PiMessage,
-  type Usage as PiUsage,
+  runAgentCore,
   streamSimple,
-} from '@mariozechner/pi-ai'
+  type PiMessage,
+  type PiAssistantMessage,
+  type PiModel,
+  type PiApi,
+} from '@openchatlab/node-runtime'
 
 import type { AgentConfig, AgentStreamChunk, AgentResult, SkillContext } from './types'
 import type { AssistantConfig } from '../assistant/types'
@@ -35,7 +36,7 @@ export type { AgentConfig, AgentStreamChunk, AgentResult, TokenUsage, AgentRunti
 export class Agent {
   private context: ToolContext
   private config: AgentConfig
-  private piModel: import('@mariozechner/pi-ai').Model<any>
+  private piModel: PiModel<PiApi>
   private apiKey: string
   private abortSignal?: AbortSignal
   private chatType: 'group' | 'private' = 'group'
@@ -45,7 +46,7 @@ export class Agent {
 
   constructor(
     context: ToolContext,
-    piModel: import('@mariozechner/pi-ai').Model<any>,
+    piModel: PiModel<PiApi>,
     apiKey: string,
     config: AgentConfig = {},
     chatType: 'group' | 'private' = 'group',
@@ -104,7 +105,6 @@ export class Agent {
     let debugLastLoggedCount = 0
     let debugLlmRound = 1
 
-    // 捕获最后一次 LLM 调用的请求体（用于错误诊断）
     let lastRequestPayload: unknown = null
     const errorCapturingStreamFn: typeof streamSimple = (model, context, options) => {
       return streamSimple(model, context, {
@@ -116,106 +116,80 @@ export class Agent {
       })
     }
 
-    // 初始化 PiAgentCore
-    const coreAgent = new PiAgentCore({
-      initialState: {
-        model: this.piModel,
-        thinkingLevel: this.piModel.reasoning ? 'medium' : 'off',
-      },
-      getApiKey: () => this.apiKey,
-      streamFn: errorCapturingStreamFn,
-      convertToLlm: (messages) => {
-        const filtered = messages.filter(
-          (msg): msg is PiMessage => msg.role === 'user' || msg.role === 'assistant' || msg.role === 'toolResult'
-        )
-        if (isDebugMode()) {
-          const newMessages = filtered.slice(debugLastLoggedCount)
-          if (newMessages.length > 0) {
-            const parts: string[] = []
-            for (const m of newMessages) {
-              // pi-ai 的 Message 联合类型较严格，这里仅用于调试日志读取动态字段。
-              const msg = m as unknown as Record<string, unknown>
-              parts.push(`--- ${msg.role} ---`)
-              const content = msg.content as
-                | Array<{ type: string; text?: string; name?: string; arguments?: unknown }>
-                | undefined
-              if (Array.isArray(content)) {
-                for (const block of content) {
-                  if (block.type === 'text' && block.text) {
-                    parts.push(block.text)
-                  } else if (block.type === 'toolCall') {
-                    parts.push(`[Tool Call] ${block.name}(${JSON.stringify(block.arguments)})`)
-                  }
-                }
-              }
-            }
-            aiLogger.debug(
-              'Agent',
-              `[DEBUG] LLM round ${debugLlmRound} - ${newMessages.length} new, total ${filtered.length}\n${parts.join('\n')}`
-            )
-          }
-          debugLastLoggedCount = filtered.length
-          debugLlmRound++
-        }
-        return filtered
-      },
-    })
-
-    // 配置 prompt、工具、历史
-    coreAgent.setSystemPrompt(systemPrompt)
     const allowedTools = this.assistantConfig?.allowedBuiltinTools
     const toolContext = { ...this.context, locale: this.locale }
     const piTools = getAllTools(toolContext, allowedTools)
 
-    // AI 自选模式：注册 activate_skill 元工具（手动选择时不注册，避免冲突）
     if (this.skillCtx?.skillMenu && !this.skillCtx?.skillDef) {
       piTools.push(createActivateSkillTool(this.chatType, allowedTools, this.locale))
     }
 
-    coreAgent.setTools(maxToolRounds > 0 ? piTools : [])
-
     const historyMessages = this.loadHistory()
-    coreAgent.replaceMessages(this.toPiHistoryMessages(historyMessages))
 
-    handler.emitStatus('preparing', coreAgent.state.messages, {
+    let cachedMessages: PiMessage[] = []
+
+    handler.emitStatus('preparing', cachedMessages, {
       pendingUserMessage: userMessage,
       force: true,
     })
 
-    // 订阅事件
-    const subscriber = handler.createSubscriber(coreAgent, maxToolRounds, answerWithoutToolsPrompt)
-    const unsubscribe = coreAgent.subscribe(subscriber)
-
-    // Abort 转发
-    const forwardAbort = () => coreAgent.abort()
-    if (this.abortSignal) {
-      this.abortSignal.addEventListener('abort', forwardAbort, { once: true })
-    }
-
     try {
-      if (isDebugMode()) {
-        // 捕获发给 LLM 的完整上下文（system prompt + history + user message），写入 DB
-        if (this.context.conversationId) {
-          try {
-            const debugMessages = [
-              { role: 'system', content: systemPrompt },
-              ...historyMessages.map((m) => ({
-                role: m.role === 'summary' ? 'assistant' : m.role,
-                content: m.content,
-              })),
-              { role: 'user', content: userMessage },
-            ]
-            setPendingDebugContext(this.context.conversationId, JSON.stringify(debugMessages, null, 2))
-          } catch {
-            // 静默失败，不影响主流程
+      const result = await runAgentCore({
+        piModel: this.piModel,
+        apiKey: this.apiKey,
+        systemPrompt,
+        tools: maxToolRounds > 0 ? piTools : [],
+        history: historyMessages,
+        userMessage,
+        maxToolRounds,
+        abortSignal: this.abortSignal,
+        steerMessage: answerWithoutToolsPrompt,
+        streamFn: errorCapturingStreamFn,
+        onConvertToLlm: (filteredMessages) => {
+          cachedMessages = filteredMessages as PiMessage[]
+          if (isDebugMode()) {
+            const newMessages = filteredMessages.slice(debugLastLoggedCount) as PiMessage[]
+            if (newMessages.length > 0) {
+              const parts: string[] = []
+              for (const m of newMessages) {
+                const msg = m as unknown as Record<string, unknown>
+                parts.push(`--- ${msg.role} ---`)
+                const content = msg.content as
+                  | Array<{ type: string; text?: string; name?: string; arguments?: unknown }>
+                  | undefined
+                if (Array.isArray(content)) {
+                  for (const block of content) {
+                    if (block.type === 'text' && block.text) {
+                      parts.push(block.text)
+                    } else if (block.type === 'toolCall') {
+                      parts.push(`[Tool Call] ${block.name}(${JSON.stringify(block.arguments)})`)
+                    }
+                  }
+                }
+              }
+              aiLogger.debug(
+                'Agent',
+                `[DEBUG] LLM round ${debugLlmRound} - ${newMessages.length} new, total ${filteredMessages.length}\n${parts.join('\n')}`
+              )
+            }
+            debugLastLoggedCount = filteredMessages.length
+            debugLlmRound++
           }
-        }
-      }
-
-      await coreAgent.prompt(userMessage)
+        },
+        onDebugContext: (messages) => {
+          if (isDebugMode() && this.context.conversationId) {
+            try {
+              setPendingDebugContext(this.context.conversationId, JSON.stringify(messages, null, 2))
+            } catch {
+              // silent
+            }
+          }
+        },
+        onEvent: (event) => handler.handleCoreEvent(event, cachedMessages),
+      })
 
       if (this.isAborted()) {
-        handler.emitStatus('aborted', coreAgent.state.messages, { force: true })
+        handler.emitStatus('aborted', cachedMessages, { force: true })
         onChunk({ type: 'done', isFinished: true, usage: handler.cloneUsage() })
         return {
           content: '',
@@ -225,8 +199,8 @@ export class Agent {
         }
       }
 
-      if (coreAgent.state.error) {
-        const agentError = new Error(coreAgent.state.error) as Error & {
+      if (result.error) {
+        const agentError = new Error(result.error) as Error & {
           agentContext?: {
             provider?: string
             model?: string
@@ -235,7 +209,7 @@ export class Agent {
             requestBody?: string
           }
         }
-        const lastMsg = [...coreAgent.state.messages].reverse().find((m) => m.role === 'assistant') as
+        const lastMsg = [...result.finalMessages].reverse().find((m) => m.role === 'assistant') as
           | (PiAssistantMessage & { provider?: string; model?: string; api?: string })
           | undefined
         const ctx: NonNullable<typeof agentError.agentContext> = {}
@@ -244,7 +218,6 @@ export class Agent {
           ctx.model = lastMsg.model
           ctx.api = lastMsg.api
         }
-        // 从 model.baseUrl 和 api 类型构造完整请求 URL
         const baseUrl = (this.piModel as unknown as Record<string, unknown>).baseUrl as string | undefined
         if (baseUrl) {
           const apiType = lastMsg?.api || (this.piModel as unknown as Record<string, unknown>).api
@@ -267,8 +240,7 @@ export class Agent {
         throw agentError
       }
 
-      // 提取最终回复
-      const finalAssistant = [...coreAgent.state.messages]
+      const finalAssistant = [...result.finalMessages]
         .reverse()
         .find((msg): msg is PiAssistantMessage => msg.role === 'assistant')
 
@@ -284,31 +256,22 @@ export class Agent {
         aiLogger.debug('Agent', `[DEBUG] Final response\n${finalContent}`)
       }
 
-      handler.emitStatus('completed', coreAgent.state.messages, { force: true })
-      onChunk({ type: 'done', isFinished: true, usage: handler.cloneUsage() })
+      handler.emitStatus('completed', cachedMessages, { force: true })
+      onChunk({ type: 'done', isFinished: true, usage: result.usage })
 
       return {
         content: finalContent,
-        toolsUsed: [...handler.toolsUsed],
-        toolRounds: handler.toolRounds,
-        totalUsage: handler.cloneUsage(),
+        toolsUsed: [...result.toolsUsed],
+        toolRounds: result.toolRounds,
+        totalUsage: result.usage,
       }
     } catch (error) {
       const phase = this.isAborted() ? 'aborted' : 'error'
-      handler.emitStatus(phase, coreAgent.state.messages, { force: true })
+      handler.emitStatus(phase, cachedMessages, { force: true })
       throw error
-    } finally {
-      unsubscribe()
-      if (this.abortSignal) {
-        this.abortSignal.removeEventListener('abort', forwardAbort)
-      }
     }
   }
 
-  /**
-   * 从 SQLite 加载对话历史
-   * 当 context.conversationId 存在时从 DB 读取，否则返回空数组
-   */
   private loadHistory(): SimpleHistoryMessage[] {
     const { conversationId } = this.context
     if (!conversationId) {
@@ -320,41 +283,6 @@ export class Agent {
       aiLogger.warn('Agent', 'Failed to load history from DB, using empty history', { conversationId, error })
       return []
     }
-  }
-
-  private createEmptyPiUsage(): PiUsage {
-    return {
-      input: 0,
-      output: 0,
-      cacheRead: 0,
-      cacheWrite: 0,
-      totalTokens: 0,
-      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
-    }
-  }
-
-  private toPiHistoryMessages(messages: SimpleHistoryMessage[]): PiMessage[] {
-    return messages.map((msg): PiMessage => {
-      if (msg.role === 'user') {
-        return {
-          role: 'user',
-          content: [{ type: 'text', text: msg.content || '' }],
-          timestamp: Date.now(),
-        }
-      }
-
-      // summary 作为 assistant 消息传给 LLM（它是压缩后的上下文总结）
-      return {
-        role: 'assistant',
-        content: [{ type: 'text', text: msg.content || '' }],
-        api: 'openai-completions',
-        provider: 'chatlab',
-        model: 'unknown',
-        usage: this.createEmptyPiUsage(),
-        stopReason: 'stop',
-        timestamp: Date.now(),
-      }
-    })
   }
 }
 

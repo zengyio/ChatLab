@@ -6,6 +6,8 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
+    "@mariozechner/pi-agent-core": "0.54.2",
+    "@mariozechner/pi-ai": "0.54.2",
     "@openchatlab/core": "workspace:*",
     "gray-matter": "^4.0.3",
     "js-tiktoken": "^1.0.21"

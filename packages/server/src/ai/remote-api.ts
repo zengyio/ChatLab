@@ -5,7 +5,7 @@
  * - fetchRemoteModels: 调用 provider API 获取可用模型列表
  */
 
-import { completeSimple } from '@mariozechner/pi-ai'
+import { completeSimple } from '@openchatlab/node-runtime'
 import { BUILTIN_PROVIDERS } from '@openchatlab/core'
 import { buildPiModel, type AIServiceConfig } from './llm-config'
 

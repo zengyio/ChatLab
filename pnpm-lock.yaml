@@ -155,6 +155,12 @@ importers:
 
   packages/node-runtime:
     dependencies:
+      '@mariozechner/pi-agent-core':
+        specifier: 0.54.2
+        version: 0.54.2(@modelcontextprotocol/sdk@1.29.0(zod@3.25.76))(ws@8.19.0)(zod@3.25.76)
+      '@mariozechner/pi-ai':
+        specifier: 0.54.2
+        version: 0.54.2(@modelcontextprotocol/sdk@1.29.0(zod@3.25.76))(ws@8.19.0)(zod@3.25.76)
       '@openchatlab/core':
         specifier: workspace:*
         version: link:../core
@@ -179,12 +185,6 @@ importers:
       '@fastify/static':
         specifier: ^9.1.3
         version: 9.1.3
-      '@mariozechner/pi-agent-core':
-        specifier: 0.54.2
-        version: 0.54.2(@modelcontextprotocol/sdk@1.29.0(zod@3.25.76))(ws@8.19.0)(zod@3.25.76)
-      '@mariozechner/pi-ai':
-        specifier: 0.54.2
-        version: 0.54.2(@modelcontextprotocol/sdk@1.29.0(zod@3.25.76))(ws@8.19.0)(zod@3.25.76)
       '@modelcontextprotocol/sdk':
         specifier: ^1.12.1
         version: 1.29.0(zod@3.25.76)

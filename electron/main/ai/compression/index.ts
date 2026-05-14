@@ -23,7 +23,7 @@ import { getManager } from '../conversations'
 
 const DEFAULT_CONTEXT_WINDOW = 128000
 
-function createLlmAdapter(activeAIConfig: AIServiceConfig): CompressionLlmAdapter {
+function createLlmAdapter(activeAIConfig: AIServiceConfig, onCompressing?: () => void): CompressionLlmAdapter {
   const modelDef = findModelDefinition(activeAIConfig.provider, activeAIConfig.model || '')
   const contextWindow = modelDef?.contextWindow ?? DEFAULT_CONTEXT_WINDOW
   const piModel = buildPiModel(activeAIConfig)
@@ -31,6 +31,7 @@ function createLlmAdapter(activeAIConfig: AIServiceConfig): CompressionLlmAdapte
   return {
     contextWindow,
     compress: async (prompt: string, maxTokens: number) => {
+      onCompressing?.()
       try {
         const result = await completeSimple(
           piModel,
@@ -66,13 +67,14 @@ export async function checkAndCompress(
   conversationId: string,
   config: CompressionConfig,
   systemPrompt: string,
-  activeAIConfig: AIServiceConfig
+  activeAIConfig: AIServiceConfig,
+  onCompressing?: () => void
 ): Promise<CompressionResult> {
   return sharedCheckAndCompress(
     conversationId,
     config,
     systemPrompt,
-    createLlmAdapter(activeAIConfig),
+    createLlmAdapter(activeAIConfig, onCompressing),
     getManager(),
     electronLogger
   )
