@@ -27,6 +27,14 @@ import {
   setDefaultAssistantSlot,
   setFastModelSlot,
 } from '../../ai/llm-config'
+import {
+  addCustomProvider,
+  updateCustomProvider,
+  deleteCustomProvider,
+  addCustomModel,
+  updateCustomModel,
+  deleteCustomModel,
+} from '../../ai/custom-store'
 
 function getAiDir(dbManager: DatabaseManager): string {
   const pathProvider = (dbManager as any)['pathProvider']
@@ -290,6 +298,81 @@ export function registerAiRoutes(
   }>('/_web/ai/llm/fast-model-slot', async (request) => {
     const aiDataDir = getAiDir(dbManager)
     return setFastModelSlot(aiDataDir, request.body)
+  })
+
+  // ==================== Custom Provider CRUD ====================
+
+  server.post<{
+    Body: {
+      name: string
+      kind: string
+      defaultBaseUrl: string
+      authMode?: string
+      supportsCustomModels?: boolean
+      modelIds?: string[]
+      website?: string
+      consoleUrl?: string
+    }
+  }>('/_web/ai/llm/custom-providers', async (request) => {
+    const aiDataDir = getAiDir(dbManager)
+    return addCustomProvider(aiDataDir, {
+      ...request.body,
+      kind: (request.body.kind || 'openai-compatible') as 'official' | 'aggregator' | 'openai-compatible',
+      authMode: 'api-key',
+      supportsCustomModels: request.body.supportsCustomModels ?? true,
+      modelIds: request.body.modelIds ?? [],
+    })
+  })
+
+  server.put<{
+    Params: { id: string }
+    Body: Record<string, unknown>
+  }>('/_web/ai/llm/custom-providers/:id', async (request) => {
+    const aiDataDir = getAiDir(dbManager)
+    return updateCustomProvider(aiDataDir, request.params.id, request.body as any)
+  })
+
+  server.delete<{ Params: { id: string } }>('/_web/ai/llm/custom-providers/:id', async (request) => {
+    const aiDataDir = getAiDir(dbManager)
+    return deleteCustomProvider(aiDataDir, request.params.id)
+  })
+
+  // ==================== Custom Model CRUD ====================
+
+  server.post<{
+    Body: {
+      id: string
+      providerId: string
+      name: string
+      description?: string
+      contextWindow?: number
+      capabilities?: string[]
+      recommendedFor?: string[]
+      status?: string
+    }
+  }>('/_web/ai/llm/custom-models', async (request) => {
+    const aiDataDir = getAiDir(dbManager)
+    return addCustomModel(aiDataDir, {
+      ...request.body,
+      capabilities: (request.body.capabilities ?? ['chat']) as any,
+      recommendedFor: (request.body.recommendedFor ?? ['chat']) as any,
+      status: (request.body.status ?? 'stable') as any,
+    })
+  })
+
+  server.put<{
+    Params: { providerId: string; modelId: string }
+    Body: Record<string, unknown>
+  }>('/_web/ai/llm/custom-models/:providerId/:modelId', async (request) => {
+    const aiDataDir = getAiDir(dbManager)
+    return updateCustomModel(aiDataDir, request.params.providerId, request.params.modelId, request.body as any)
+  })
+
+  server.delete<{
+    Params: { providerId: string; modelId: string }
+  }>('/_web/ai/llm/custom-models/:providerId/:modelId', async (request) => {
+    const aiDataDir = getAiDir(dbManager)
+    return deleteCustomModel(aiDataDir, request.params.providerId, request.params.modelId)
   })
 
   // ==================== Tool Catalog ====================

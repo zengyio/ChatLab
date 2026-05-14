@@ -216,9 +216,18 @@ async function installAiApiShims(): Promise<void> {
     validateApiKey: () => Promise.resolve(WEB_STUB),
     fetchRemoteModels: () => Promise.resolve({ success: false, error: 'Not available in web mode', models: [] }),
     chatStream: () => Promise.resolve({ success: false, error: 'Not available in web mode' }),
-    addCustomModel: () => Promise.resolve(WEB_STUB),
-    updateCustomModel: () => Promise.resolve(WEB_STUB),
-    deleteCustomModel: () => Promise.resolve(WEB_STUB),
+    addCustomModel: async (input: Record<string, unknown>) => {
+      const { post: httpPost } = await import('./utils/http')
+      return httpPost('/ai/llm/custom-models', input)
+    },
+    updateCustomModel: async (providerId: string, modelId: string, updates: Record<string, unknown>) => {
+      const { put: httpPut } = await import('./utils/http')
+      return httpPut(`/ai/llm/custom-models/${providerId}/${encodeURIComponent(modelId)}`, updates)
+    },
+    deleteCustomModel: async (providerId: string, modelId: string) => {
+      const { del } = await import('./utils/http')
+      return del(`/ai/llm/custom-models/${providerId}/${encodeURIComponent(modelId)}`)
+    },
   }
   const { fetchSSE } = await import('./utils/sse')
   const { post: httpPost } = await import('./utils/http')
