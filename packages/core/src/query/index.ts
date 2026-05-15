@@ -1,7 +1,24 @@
-export { buildTimeFilter, buildSystemMessageFilter } from './filters'
+export { buildTimeFilter, buildSystemMessageFilter, hasTable, hasColumn } from './filters'
 
-export { isChatSessionDb, getSessionMeta, getSessionOverview, getDatabaseSchema } from './session-queries'
-export type { SessionMeta, SessionOverview, SessionInfo } from './session-queries'
+export {
+  isChatSessionDb,
+  getSessionMeta,
+  getSessionOverview,
+  getDatabaseSchema,
+  getChatOverview,
+  searchSessions,
+  getSessionMessages,
+  getSessionSummaries,
+} from './session-queries'
+export type {
+  SessionMeta,
+  SessionOverview,
+  SessionInfo,
+  ChatOverviewData,
+  SessionSearchItem,
+  SessionMessagesData,
+  SessionSummaryData,
+} from './session-queries'
 
 export {
   getTimeRange,
@@ -33,6 +50,12 @@ export {
   getMembers,
   getMembersDetailed,
   executeReadonlySql,
+  getMessageContext,
+  getSearchMessageContext,
+  getConversationBetween,
+  getMemberNameHistory,
+  getMembersWithAliases,
+  executeParameterizedSql,
 } from './message-queries'
 export type {
   QueryMessagesOptions,
@@ -40,6 +63,10 @@ export type {
   MessageResult,
   PaginatedMessages,
   MemberDetailed,
+  ContextMessage,
+  ConversationData,
+  MemberNameHistoryEntry,
+  MemberWithAliases,
 } from './message-queries'
 
 // Advanced analytics

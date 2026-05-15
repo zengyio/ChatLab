@@ -10,6 +10,7 @@ import { CoreDataProvider } from '@openchatlab/tools'
 import type { DatabaseAdapter } from '@openchatlab/core'
 import {
   applyPreprocessingPipeline,
+  batchSegmentWithFrequency,
   type AgentTool,
   type AgentToolResult,
   type PreprocessableMessage,
@@ -63,6 +64,7 @@ export function adaptToolsForAgent(
         dataProvider: new CoreDataProvider(ctx.db),
         sessionId: ctx.sessionId,
         locale: ctx.locale,
+        segmentText: (texts, locale, options) => batchSegmentWithFrequency(texts, locale as any, options as any),
       }
       try {
         const result = await tool.handler(params, execCtx)

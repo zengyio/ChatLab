@@ -1,23 +1,30 @@
 /**
  * CoreDataProvider
  *
- * 基于 @openchatlab/core 同步查询函数的 ToolDataProvider 实现。
- * 供 Server / MCP 使用，通过 DatabaseAdapter 直接访问 SQLite。
- *
- * 新增的 Electron-first 方法（getChatOverview、searchSessions 等）暂未在 core 中实现，
- * 抛出 NotImplementedError。Server 的 TOOL_REGISTRY 不注册这些工具，不会实际调用到。
+ * ToolDataProvider implementation backed by @openchatlab/core query functions.
+ * Used by Server / MCP, accessing SQLite through DatabaseAdapter.
  */
 
 import type { DatabaseAdapter } from '@openchatlab/core'
 import {
   searchMessagesLike,
-  getRecentMessages,
+  getRecentMessages as coreGetRecentMessages,
   getMemberActivity,
   getHourlyActivity,
   getWeekdayActivity,
   getDailyActivity,
   executeReadonlySql,
   getDatabaseSchema,
+  getMessageContext as coreGetMessageContext,
+  getSearchMessageContext as coreGetSearchMessageContext,
+  getConversationBetween as coreGetConversationBetween,
+  getMemberNameHistory as coreGetMemberNameHistory,
+  getMembersWithAliases,
+  executeParameterizedSql as coreExecuteParameterizedSql,
+  getChatOverview as coreGetChatOverview,
+  searchSessions as coreSearchSessions,
+  getSessionMessages as coreGetSessionMessages,
+  getSessionSummaries as coreGetSessionSummaries,
 } from '@openchatlab/core'
 import type {
   ToolDataProvider,
@@ -34,15 +41,6 @@ import type {
   SessionSummaryItem,
   RawMessage,
 } from '../types'
-
-class NotImplementedError extends Error {
-  constructor(method: string) {
-    super(
-      `CoreDataProvider.${method} is not implemented. This method is only available in Electron via WorkerDataProvider.`
-    )
-    this.name = 'NotImplementedError'
-  }
-}
 
 export class CoreDataProvider implements ToolDataProvider {
   constructor(private db: DatabaseAdapter) {}
@@ -74,15 +72,15 @@ export class CoreDataProvider implements ToolDataProvider {
   }
 
   async getSearchMessageContext(
-    _messageIds: number[],
-    _contextBefore: number,
-    _contextAfter: number
+    messageIds: number[],
+    contextBefore: number,
+    contextAfter: number
   ): Promise<RawMessage[]> {
-    throw new NotImplementedError('getSearchMessageContext')
+    return coreGetSearchMessageContext(this.db, messageIds, contextBefore, contextAfter)
   }
 
   async getRecentMessages(options?: { timeFilter?: TimeFilter; limit?: number }): Promise<SearchMessagesResult> {
-    const messages = getRecentMessages(this.db, { limit: options?.limit ?? 50 })
+    const messages = coreGetRecentMessages(this.db, { limit: options?.limit ?? 50 })
     return {
       messages: messages.map((m) => ({
         id: m.id,
@@ -96,16 +94,16 @@ export class CoreDataProvider implements ToolDataProvider {
     }
   }
 
-  async getMessageContext(_messageIds: number[], _contextSize: number): Promise<RawMessage[]> {
-    throw new NotImplementedError('getMessageContext')
+  async getMessageContext(messageIds: number[], contextSize: number): Promise<RawMessage[]> {
+    return coreGetMessageContext(this.db, messageIds, contextSize)
   }
 
-  async getChatOverview(_topN?: number): Promise<ChatOverviewResult | null> {
-    throw new NotImplementedError('getChatOverview')
+  async getChatOverview(topN?: number): Promise<ChatOverviewResult | null> {
+    return coreGetChatOverview(this.db, topN)
   }
 
   async getMembers(): Promise<MemberInfo[]> {
-    throw new NotImplementedError('getMembers')
+    return getMembersWithAliases(this.db)
   }
 
   async getMemberStats(options?: { timeFilter?: TimeFilter; top?: number }): Promise<MemberStatItem[]> {
@@ -118,8 +116,8 @@ export class CoreDataProvider implements ToolDataProvider {
     }))
   }
 
-  async getMemberNameHistory(_memberId: number): Promise<NameHistoryItem[]> {
-    throw new NotImplementedError('getMemberNameHistory')
+  async getMemberNameHistory(memberId: number): Promise<NameHistoryItem[]> {
+    return coreGetMemberNameHistory(this.db, memberId)
   }
 
   async getTimeStats(type: 'hourly' | 'weekday' | 'daily', options?: { timeFilter?: TimeFilter }): Promise<unknown[]> {
@@ -136,29 +134,29 @@ export class CoreDataProvider implements ToolDataProvider {
   }
 
   async searchSessions(
-    _keywords?: string[],
-    _timeFilter?: TimeFilter,
-    _limit?: number,
-    _previewCount?: number
+    keywords?: string[],
+    timeFilter?: TimeFilter,
+    limit?: number,
+    previewCount?: number
   ): Promise<SessionSearchResult[]> {
-    throw new NotImplementedError('searchSessions')
+    return coreSearchSessions(this.db, keywords, timeFilter, limit, previewCount)
   }
 
-  async getSessionMessages(_chatSessionId: number, _limit?: number): Promise<SessionMessagesResult | null> {
-    throw new NotImplementedError('getSessionMessages')
+  async getSessionMessages(chatSessionId: number, limit?: number): Promise<SessionMessagesResult | null> {
+    return coreGetSessionMessages(this.db, chatSessionId, limit)
   }
 
-  async getSessionSummaries(_options?: { limit?: number; timeFilter?: TimeFilter }): Promise<SessionSummaryItem[]> {
-    throw new NotImplementedError('getSessionSummaries')
+  async getSessionSummaries(options?: { limit?: number; timeFilter?: TimeFilter }): Promise<SessionSummaryItem[]> {
+    return coreGetSessionSummaries(this.db, options)
   }
 
   async getConversationBetween(
-    _memberId1: number,
-    _memberId2: number,
-    _timeFilter?: TimeFilter,
-    _limit?: number
+    memberId1: number,
+    memberId2: number,
+    timeFilter?: TimeFilter,
+    limit?: number
   ): Promise<ConversationResult> {
-    throw new NotImplementedError('getConversationBetween')
+    return coreGetConversationBetween(this.db, memberId1, memberId2, timeFilter, limit)
   }
 
   async executeSql(sql: string): Promise<unknown> {
@@ -166,10 +164,10 @@ export class CoreDataProvider implements ToolDataProvider {
   }
 
   async executeParameterizedSql<T = Record<string, unknown>>(
-    _query: string,
-    _params: Record<string, unknown>
+    query: string,
+    params: Record<string, unknown>
   ): Promise<T[]> {
-    throw new NotImplementedError('executeParameterizedSql')
+    return coreExecuteParameterizedSql<T>(this.db, query, params)
   }
 
   async getSchema(): Promise<SchemaTableInfo[]> {

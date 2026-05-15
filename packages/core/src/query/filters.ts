@@ -1,10 +1,11 @@
 /**
  * SQL 查询过滤条件构建工具
  *
- * 平台无关的 WHERE 子句构建器，供所有查询模块复用。
+ * 平台无关的 WHERE 子句构建器和 schema 检测工具，供所有查询模块复用。
  */
 
 import type { TimeFilter } from '@openchatlab/shared-types'
+import type { DatabaseAdapter } from '../interfaces'
 
 /**
  * 构建时间过滤 WHERE 子句
@@ -38,6 +39,23 @@ export function buildTimeFilter(
     clause: conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '',
     params,
   }
+}
+
+/**
+ * Check if a table exists in the database
+ */
+export function hasTable(db: DatabaseAdapter, tableName: string): boolean {
+  const row = db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(tableName)
+  return row !== undefined
+}
+
+/**
+ * Check if a column exists in a table
+ */
+export function hasColumn(db: DatabaseAdapter, tableName: string, columnName: string): boolean {
+  const rows = db.pragma(`table_info(${tableName})`) as Array<{ name: string }>
+  if (!Array.isArray(rows)) return false
+  return rows.some((r) => r.name === columnName)
 }
 
 /**
