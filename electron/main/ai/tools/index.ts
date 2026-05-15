@@ -11,14 +11,7 @@ import { TOOL_REGISTRY } from './definitions'
 
 const CORE_TOOL_NAMES = new Set(TOOL_REGISTRY.filter((e) => e.category === 'core').map((e) => e.name))
 import { t as i18nT } from '../../i18n'
-import { preprocessMessages, type PreprocessableMessage } from '../preprocessor'
-import {
-  formatMessageCompact,
-  formatToolResultAsText,
-  truncateFormattedMessages,
-  anonymizeMessageNames,
-  countTokens,
-} from '@openchatlab/node-runtime'
+import { applyPreprocessingPipeline, type PreprocessableMessage } from '@openchatlab/node-runtime'
 import { getSkillConfig } from '../skills'
 import { createActivateSkillTool as sharedCreateActivateSkillTool } from '@openchatlab/node-runtime'
 
@@ -62,10 +55,7 @@ function translateTool(tool: AgentTool<any>): AgentTool<any> {
 /**
  * 预处理包装层
  * 拦截工具的 execute 结果：如果 details 中包含 rawMessages，
- * 则执行预处理管道 + 格式化，替换为最终的 LLM 内容
- *
- * 工具约定：返回消息的工具在 details 中放置 rawMessages 字段（结构化消息数组），
- * 处理层负责 preprocess + formatMessageCompact，工具无需感知预处理逻辑。
+ * 则委托共享管道 applyPreprocessingPipeline 执行预处理 + 格式化 + 截断。
  */
 function wrapWithPreprocessing(tool: AgentTool<any>, context: ToolContext): AgentTool<any> {
   const originalExecute = tool.execute
@@ -79,51 +69,22 @@ function wrapWithPreprocessing(tool: AgentTool<any>, context: ToolContext): Agen
         return result
       }
 
-      const raw = details.rawMessages as PreprocessableMessage[]
-      const processed = preprocessMessages(raw, context.preprocessConfig)
+      const { rawMessages, ...restDetails } = details
 
-      let nameMapLine = ''
-      if (context.preprocessConfig?.anonymizeNames) {
-        nameMapLine = anonymizeMessageNames(processed, context.ownerInfo?.platformId)
-      }
-
-      let formatted = processed.map((m) => formatMessageCompact(m, context.locale))
-
-      // Token-aware 截断：超出预算时按策略裁剪消息列表
-      let wasTruncated = false
-      const originalCount = formatted.length
-      if (context.maxToolResultTokens && context.maxToolResultTokens > 0) {
-        const truncResult = truncateFormattedMessages(
-          formatted,
-          context.maxToolResultTokens,
-          TRUNCATION_STRATEGY_MAP.get(tool.name) ?? 'keep_last',
-          countTokens
-        )
-        if (truncResult.wasTruncated) {
-          formatted = truncResult.messages
-          wasTruncated = true
-        }
-      }
-
-      const { rawMessages: _rawMessages, ...restDetails } = details
-      const finalDetails = { ...restDetails, messages: formatted, returned: formatted.length }
-
-      let textContent = formatToolResultAsText(finalDetails)
-
-      if (wasTruncated) {
-        const strategy = TRUNCATION_STRATEGY_MAP.get(tool.name) ?? 'keep_last'
-        const strategyDesc = strategy === 'keep_first' ? 'most relevant' : 'most recent'
-        const notice = `⚠️ Results truncated: ${originalCount} messages found, showing ${formatted.length} ${strategyDesc} due to context limit. Use a narrower time range or more specific keywords for more precise results.`
-        textContent = notice + '\n' + textContent
-      }
-
-      if (nameMapLine) {
-        textContent = nameMapLine + '\n' + textContent
-      }
+      const pipelineResult = applyPreprocessingPipeline({
+        rawMessages: rawMessages as PreprocessableMessage[],
+        preprocessConfig: context.preprocessConfig,
+        locale: context.locale,
+        anonymizeNames: context.preprocessConfig?.anonymizeNames ?? false,
+        ownerPlatformId: context.ownerInfo?.platformId,
+        maxToolResultTokens: context.maxToolResultTokens,
+        truncationStrategy: TRUNCATION_STRATEGY_MAP.get(tool.name) ?? 'keep_last',
+        extraDetails: restDetails as Record<string, unknown>,
+      })
 
       return {
-        content: [{ type: 'text' as const, text: textContent }],
-        details: finalDetails,
+        content: [{ type: 'text' as const, text: pipelineResult.text }],
+        details: pipelineResult.details,
       }
     },
   }

@@ -51,7 +51,9 @@ export {
   isChineseLocale,
   i18nTexts,
   t,
+  applyPreprocessingPipeline,
 } from './preprocessor'
+export type { PreprocessingPipelineOptions, PreprocessingPipelineResult } from './preprocessor'
 
 // Agent Core
 export type { AgentCoreOptions, AgentCoreEvent, AgentCoreResult, AgentTokenUsage, SimpleHistoryMessage } from './agent'

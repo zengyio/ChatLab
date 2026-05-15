@@ -9,11 +9,7 @@ import type { ToolDefinition, ToolExecutionContext } from '@openchatlab/tools'
 import { CoreDataProvider } from '@openchatlab/tools'
 import type { DatabaseAdapter } from '@openchatlab/core'
 import {
-  preprocessMessages,
-  formatMessageCompact,
-  truncateFormattedMessages,
-  formatToolResultAsText,
-  countTokens,
+  applyPreprocessingPipeline,
   type AgentTool,
   type AgentToolResult,
   type PreprocessableMessage,
@@ -45,47 +41,6 @@ function convertJsonSchemaToParameters(schema: ToolDefinition['inputSchema']) {
   }
 }
 
-function applyPreprocessing(
-  rawMessages: PreprocessableMessage[],
-  toolName: string,
-  locale?: string,
-  details?: Record<string, unknown>
-): string {
-  const processed = preprocessMessages(rawMessages)
-  let formatted = processed.map((m) => formatMessageCompact(m, locale))
-
-  let wasTruncated = false
-  const originalCount = formatted.length
-  const budget = DEFAULT_MAX_TOOL_RESULT_TOKENS
-
-  let totalTokens = 0
-  for (const line of formatted) {
-    totalTokens += countTokens(line) + 1
-  }
-
-  if (totalTokens > budget) {
-    const strategy = TOOL_TRUNCATION_STRATEGY[toolName] ?? 'keep_last'
-    const truncResult = truncateFormattedMessages(formatted, budget, strategy, countTokens)
-    if (truncResult.wasTruncated) {
-      formatted = truncResult.messages
-      wasTruncated = true
-    }
-  }
-
-  const finalDetails = { ...details, messages: formatted, returned: formatted.length }
-  const { rawMessages: _, ...restDetails } = finalDetails as Record<string, unknown>
-  let textContent = formatToolResultAsText({ ...restDetails, messages: formatted, returned: formatted.length })
-
-  if (wasTruncated) {
-    const strategy = TOOL_TRUNCATION_STRATEGY[toolName] ?? 'keep_last'
-    const strategyDesc = strategy === 'keep_first' ? 'most relevant' : 'most recent'
-    const notice = `⚠️ Results truncated: ${originalCount} messages found, showing ${formatted.length} ${strategyDesc} due to context limit. Use a narrower time range or more specific keywords for more precise results.`
-    textContent = notice + '\n' + textContent
-  }
-
-  return textContent
-}
-
 export function adaptToolsForAgent(
   tools: ToolDefinition[],
   getContext: () => ServerToolContext
@@ -107,13 +62,14 @@ export function adaptToolsForAgent(
         const result = await tool.handler(params, execCtx)
 
         if (result.rawMessages && result.rawMessages.length > 0) {
-          const textContent = applyPreprocessing(
-            result.rawMessages as PreprocessableMessage[],
-            tool.name,
-            ctx.locale,
-            (result.data ?? {}) as Record<string, unknown>
-          )
-          return { content: [{ type: 'text', text: textContent }], details: null }
+          const pipelineResult = applyPreprocessingPipeline({
+            rawMessages: result.rawMessages as PreprocessableMessage[],
+            locale: ctx.locale,
+            maxToolResultTokens: DEFAULT_MAX_TOOL_RESULT_TOKENS,
+            truncationStrategy: TOOL_TRUNCATION_STRATEGY[tool.name] ?? 'keep_last',
+            extraDetails: (result.data ?? {}) as Record<string, unknown>,
+          })
+          return { content: [{ type: 'text', text: pipelineResult.text }], details: null }
         }
 
         return { content: [{ type: 'text', text: result.content }], details: null }

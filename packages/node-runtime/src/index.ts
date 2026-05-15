@@ -66,7 +66,9 @@ export {
   isChineseLocale,
   i18nTexts,
   t,
+  applyPreprocessingPipeline,
 } from './ai'
+export type { PreprocessingPipelineOptions, PreprocessingPipelineResult } from './ai'
 
 export type {
   AIConversation,

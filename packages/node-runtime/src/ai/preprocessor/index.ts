@@ -18,3 +18,7 @@ export {
   i18nTexts,
   t,
 } from './format'
+
+// Preprocessing pipeline
+export type { PreprocessingPipelineOptions, PreprocessingPipelineResult } from './preprocessing-pipeline'
+export { applyPreprocessingPipeline } from './preprocessing-pipeline'
