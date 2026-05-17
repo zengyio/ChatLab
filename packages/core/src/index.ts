@@ -204,6 +204,8 @@ export {
 // Schema 与迁移
 export {
   CURRENT_SCHEMA_VERSION,
+  CHAT_DB_TABLES,
+  CHAT_DB_INDEXES,
   CHAT_DB_SCHEMA,
   FTS_TABLE_SCHEMA,
   getSchemaVersion,

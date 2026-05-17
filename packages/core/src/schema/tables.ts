@@ -11,11 +11,10 @@
 export const CURRENT_SCHEMA_VERSION = 4
 
 /**
- * 核心表结构 DDL（对应 Schema Version 4）
- *
- * 包含 6 张实体表 + 1 张 FTS5 虚拟表 + 索引
+ * Table DDL only (no indexes). Used by bulk-import workflows that defer
+ * index creation until after data is loaded for better write performance.
  */
-export const CHAT_DB_SCHEMA = `
+export const CHAT_DB_TABLES = `
   CREATE TABLE IF NOT EXISTS meta (
     name TEXT NOT NULL,
     platform TEXT NOT NULL,
@@ -75,7 +74,12 @@ export const CHAT_DB_SCHEMA = `
     session_id INTEGER NOT NULL,
     topic_id INTEGER
   );
+`
 
+/**
+ * Index DDL only. Applied after bulk import or as part of full schema init.
+ */
+export const CHAT_DB_INDEXES = `
   CREATE INDEX IF NOT EXISTS idx_message_ts ON message(ts);
   CREATE INDEX IF NOT EXISTS idx_message_sender ON message(sender_id);
   CREATE INDEX IF NOT EXISTS idx_message_platform_id ON message(platform_message_id);
@@ -83,6 +87,12 @@ export const CHAT_DB_SCHEMA = `
   CREATE INDEX IF NOT EXISTS idx_session_time ON chat_session(start_ts, end_ts);
   CREATE INDEX IF NOT EXISTS idx_context_session ON message_context(session_id);
 `
+
+/**
+ * Combined tables + indexes DDL (Schema Version 4).
+ * For new database creation where deferred indexing is not needed.
+ */
+export const CHAT_DB_SCHEMA = CHAT_DB_TABLES + CHAT_DB_INDEXES
 
 /**
  * FTS5 全文搜索虚拟表 DDL
