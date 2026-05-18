@@ -9,22 +9,30 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import type { DatabaseAdapter, PathProvider } from '@openchatlab/core'
-import { isChatSessionDb } from '@openchatlab/core'
+import {
+  isChatSessionDb,
+  runMigrations,
+  needsMigration as coreNeedsMigration,
+  CURRENT_SCHEMA_VERSION,
+} from '@openchatlab/core'
 import { openBetterSqliteDatabase } from './better-sqlite3-adapter'
+import { getChatDbMigrations, type MigrationDeps } from './migrations'
 
 export class DatabaseManager {
   private cache = new Map<string, DatabaseAdapter>()
   private nativeBinding?: string
+  private migrationDeps?: MigrationDeps
 
   constructor(
     private pathProvider: PathProvider,
-    options?: { nativeBinding?: string }
+    options?: { nativeBinding?: string; migrationDeps?: MigrationDeps }
   ) {
     this.nativeBinding = options?.nativeBinding
+    this.migrationDeps = options?.migrationDeps
   }
 
   /**
-   * 打开指定会话的数据库（带缓存）
+   * Open a session DB (read-only by default, cached).
    */
   open(sessionId: string, options?: { readonly?: boolean }): DatabaseAdapter | null {
     if (this.cache.has(sessionId)) {
@@ -38,6 +46,36 @@ export class DatabaseManager {
       readonly: options?.readonly ?? true,
       nativeBinding: this.nativeBinding,
     })
+    this.cache.set(sessionId, adapter)
+    return adapter
+  }
+
+  /**
+   * Open a session DB in read-write mode and auto-run pending migrations.
+   * Falls back to `open(id, { readonly: false })` if migration is unnecessary.
+   */
+  openWritable(sessionId: string): DatabaseAdapter | null {
+    const existing = this.cache.get(sessionId)
+    if (existing && !existing.readonly) return existing
+
+    if (existing) {
+      existing.close()
+      this.cache.delete(sessionId)
+    }
+
+    const dbPath = this.getDbPath(sessionId)
+    if (!fs.existsSync(dbPath)) return null
+
+    const adapter = openBetterSqliteDatabase(dbPath, {
+      readonly: false,
+      nativeBinding: this.nativeBinding,
+    })
+
+    if (coreNeedsMigration(adapter, CURRENT_SCHEMA_VERSION)) {
+      const migrations = getChatDbMigrations(this.migrationDeps)
+      runMigrations(adapter, migrations)
+    }
+
     this.cache.set(sessionId, adapter)
     return adapter
   }

@@ -188,6 +188,10 @@ export type { PiModelConfig, BuildPiModelOptions } from './ai'
 export { fetchRemoteModels, validateApiKey } from './ai'
 export type { RemoteModel, FetchRemoteModelsResult, RemoteApiOptions } from './ai'
 
+// Chat DB migrations
+export { getChatDbMigrations } from './migrations'
+export type { MigrationDeps } from './migrations'
+
 // Merger orchestration
 export { checkConflictsFromSources, buildMergedOutput, serializeChatLabToJsonl } from './merger'
 export type {
