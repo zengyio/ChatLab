@@ -2,7 +2,7 @@
  * 聊天记录 API - 导入、分析、管理聊天记录
  */
 import { ipcRenderer } from 'electron'
-import type { AnalysisSession, MessageType, ImportProgress } from '../../../src/types/base'
+import type { AnalysisSession, MessageType, ImportProgress } from '../../../../src/types/base'
 import type {
   MemberActivity,
   MemberNameHistory,
@@ -17,9 +17,9 @@ import type {
   ClusterGraphData,
   ClusterGraphOptions,
   RelationshipStats,
-} from '../../../src/types/analysis'
-import type { LanguagePreferenceResult } from '../../../src/types/quotes/languagePreference'
-import type { FileParseInfo, ConflictCheckResult, MergeParams, MergeResult } from '../../../src/types/format'
+} from '../../../../src/types/analysis'
+import type { LanguagePreferenceResult } from '../../../../src/types/quotes/languagePreference'
+import type { FileParseInfo, ConflictCheckResult, MergeParams, MergeResult } from '../../../../src/types/format'
 
 // Chat Analysis API
 export const chatApi = {

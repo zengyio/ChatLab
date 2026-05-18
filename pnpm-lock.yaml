@@ -8,54 +8,21 @@ importers:
 
   .:
     dependencies:
-      '@aptabase/electron':
-        specifier: ^0.3.1
-        version: 0.3.1(electron@35.7.5)
-      '@electron-toolkit/preload':
-        specifier: ^3.0.1
-        version: 3.0.2(electron@35.7.5)
-      '@electron-toolkit/utils':
-        specifier: ^4.0.0
-        version: 4.0.0(electron@35.7.5)
-      '@node-rs/jieba':
-        specifier: ^2.0.1
-        version: 2.0.1
       '@tanstack/vue-virtual':
         specifier: ^3.13.18
         version: 3.13.18(vue@3.5.27(typescript@5.9.3))
       '@zumer/snapdom':
         specifier: ^2.0.1
         version: 2.0.2
-      better-sqlite3:
-        specifier: ^12.4.6
-        version: 12.6.2
       echarts:
         specifier: ^6.0.0
         version: 6.0.0
       echarts-wordcloud:
         specifier: ^2.1.0
         version: 2.1.0(echarts@6.0.0)
-      electron-updater:
-        specifier: ^6.6.2
-        version: 6.7.3
-      fastify:
-        specifier: ^5.8.4
-        version: 5.8.4
-      gray-matter:
-        specifier: ^4.0.3
-        version: 4.0.3
-      i18next:
-        specifier: ^25.8.5
-        version: 25.8.5(typescript@5.9.3)
-      js-tiktoken:
-        specifier: ^1.0.21
-        version: 1.0.21
       markdown-it:
         specifier: ^14.1.0
         version: 14.1.0
-      stream-json:
-        specifier: ^1.9.1
-        version: 1.9.1
       vue-i18n:
         specifier: ^11.2.8
         version: 11.2.8(vue@3.5.27(typescript@5.9.3))
@@ -63,24 +30,15 @@ importers:
       '@electron-toolkit/tsconfig':
         specifier: ^1.0.1
         version: 1.0.1(@types/node@25.2.2)
-      '@electron/rebuild':
-        specifier: ^4.0.1
-        version: 4.0.3
       '@nuxt/ui':
         specifier: ^4.2.1
         version: 4.4.0(@tiptap/extensions@3.19.0(@tiptap/core@3.19.0(@tiptap/pm@3.19.0))(@tiptap/pm@3.19.0))(@tiptap/y-tiptap@3.0.2(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.6)(y-protocols@1.0.7(yjs@13.6.29))(yjs@13.6.29))(axios@1.13.5)(embla-carousel@8.6.0)(tailwindcss@4.1.18)(typescript@5.9.3)(vite@6.4.1(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2))(vue-router@4.6.4(vue@3.5.27(typescript@5.9.3)))(vue@3.5.27(typescript@5.9.3))(yjs@13.6.29)(zod@3.25.76)
       '@tailwindcss/vite':
         specifier: ^4.0.0
         version: 4.1.18(vite@6.4.1(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2))
-      '@types/better-sqlite3':
-        specifier: ^7.6.13
-        version: 7.6.13
       '@types/markdown-it':
         specifier: ^14.1.2
         version: 14.1.2
-      '@types/stream-json':
-        specifier: ^1.7.8
-        version: 1.7.8
       '@vitejs/plugin-vue':
         specifier: ^5.2.3
         version: 5.2.4(vite@6.4.1(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2))(vue@3.5.27(typescript@5.9.3))
@@ -96,15 +54,6 @@ importers:
       dayjs:
         specifier: ^1.11.19
         version: 1.11.19
-      electron:
-        specifier: ^35.0.0
-        version: 35.7.5
-      electron-builder:
-        specifier: ^26.0.12
-        version: 26.7.0(electron-builder-squirrel-windows@26.7.0)
-      electron-vite:
-        specifier: ^3.0.0
-        version: 3.1.0(vite@6.4.1(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2))
       eslint:
         specifier: ^9.39.1
         version: 9.39.2(jiti@2.6.1)
@@ -123,6 +72,9 @@ importers:
       tailwindcss:
         specifier: ^4.0.0
         version: 4.1.18
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
       vite:
         specifier: ^6.3.5
         version: 6.4.1(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2)
@@ -135,6 +87,49 @@ importers:
       vue-tsc:
         specifier: ^3.1.1
         version: 3.2.6(typescript@5.9.3)
+
+  apps/desktop:
+    dependencies:
+      '@aptabase/electron':
+        specifier: ^0.3.1
+        version: 0.3.1(electron@35.7.5)
+      '@electron-toolkit/preload':
+        specifier: ^3.0.1
+        version: 3.0.2(electron@35.7.5)
+      '@electron-toolkit/utils':
+        specifier: ^4.0.0
+        version: 4.0.0(electron@35.7.5)
+      '@node-rs/jieba':
+        specifier: ^2.0.1
+        version: 2.0.1
+      better-sqlite3:
+        specifier: ^12.4.6
+        version: 12.6.2
+      electron-updater:
+        specifier: ^6.6.2
+        version: 6.7.3
+      i18next:
+        specifier: ^25.8.5
+        version: 25.8.5(typescript@5.9.3)
+    devDependencies:
+      '@electron-toolkit/tsconfig':
+        specifier: ^1.0.1
+        version: 1.0.1(@types/node@25.2.2)
+      '@electron/rebuild':
+        specifier: ^4.0.1
+        version: 4.0.3
+      '@types/better-sqlite3':
+        specifier: ^7.6.13
+        version: 7.6.13
+      electron:
+        specifier: ^35.0.0
+        version: 35.7.5
+      electron-builder:
+        specifier: ^26.0.12
+        version: 26.7.0(electron-builder-squirrel-windows@26.7.0)
+      electron-vite:
+        specifier: ^3.0.0
+        version: 3.1.0(vite@6.4.1(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2))
 
   packages/config:
     dependencies:
@@ -158,18 +153,36 @@ importers:
       '@openchatlab/core':
         specifier: workspace:*
         version: link:../core
+      better-sqlite3:
+        specifier: ^12.4.6
+        version: 12.6.2
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3
       js-tiktoken:
         specifier: ^1.0.21
         version: 1.0.21
+    optionalDependencies:
+      '@node-rs/jieba':
+        specifier: ^2.0.1
+        version: 2.0.1
+    devDependencies:
+      '@types/better-sqlite3':
+        specifier: ^7.6.13
+        version: 7.6.13
 
   packages/parser:
     dependencies:
       '@openchatlab/shared-types':
         specifier: workspace:*
         version: link:../shared-types
+      stream-json:
+        specifier: ^1.9.1
+        version: 1.9.1
+    devDependencies:
+      '@types/stream-json':
+        specifier: ^1.7.8
+        version: 1.7.8
 
   packages/server:
     dependencies:
@@ -1015,14 +1028,6 @@ packages:
   '@intlify/shared@11.2.8':
     resolution: {integrity: sha512-l6e4NZyUgv8VyXXH4DbuucFOBmxLF56C/mqh2tvApbzl2Hrhi1aTDcuv5TKdxzfHYmpO3UB0Cz04fgDT9vszfw==}
     engines: {node: '>= 16'}
-
-  '@isaacs/balanced-match@4.0.1':
-    resolution: {integrity: sha512-yzMTt9lEb8Gv7zRioUilSglI0c0smZ9k5D65677DLWLtWJaXIS3CqcGyUFByYKlnUj6TkjLVs54fBl6+TiGQDQ==}
-    engines: {node: 20 || >=22}
-
-  '@isaacs/brace-expansion@5.0.1':
-    resolution: {integrity: sha512-WMz71T1JS624nWj2n2fnYAuPovhv7EUhk69R6i9dsVyzxt5eM3bjwvgk9L+APE1TRscGysAVMANkB0jh0LQZrQ==}
-    engines: {node: 20 || >=22}
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -4044,10 +4049,6 @@ packages:
     resolution: {integrity: sha512-z0yWI+4FDrrweS8Zmt4Ej5HdJmky15+L2e6Wgn3+iK5fWzb6T3fhNFq2+MeTRb064c6Wr4N/wv0DzQTjNzHNGQ==}
     engines: {node: '>=10'}
 
-  minimatch@10.1.2:
-    resolution: {integrity: sha512-fu656aJ0n2kcXwsnwnv9g24tkU5uSmOlTjd6WyyaKm2Z+h1qmY6bAjrcaIxF/BslFqbZ8UBtbJi7KgQOZD2PTw==}
-    engines: {node: 20 || >=22}
-
   minimatch@10.2.5:
     resolution: {integrity: sha512-MULkVLfKGYDFYejP07QOurDLLQpcjk7Fw+7jXS2R2czRQzR56yHRveU5NDJEOviH+hETZKSkIk5c+T23GjFUMg==}
     engines: {node: 18 || 20 || >=22}
@@ -4089,10 +4090,6 @@ packages:
   minipass@3.3.6:
     resolution: {integrity: sha512-DxiNidxSEK+tHG6zOIklvNOwm3hvCrbUrdtzY74U6HKTJxvIDfOUL5W5P2Ghd3DTkhhKPYGqeNUIh5qcM4YBfw==}
     engines: {node: '>=8'}
-
-  minipass@7.1.2:
-    resolution: {integrity: sha512-qOOzS1cBTWYF4BH8fVePDBOO9iptMnGUEZwNc/cMWnTV2nVLZ7VoNWEPHkYczZA0pdoA7dl6e7FL659nX9S2aw==}
-    engines: {node: '>=16 || 14 >=14.17'}
 
   minipass@7.1.3:
     resolution: {integrity: sha512-tEBHqDnIoM/1rXME1zgka9g6Q2lcoCkxHLuc7ODJ5BxbP5d4c2Z5cGgtXAku59200Cx7diuHTOYfSBD8n6mm8A==}
@@ -6572,12 +6569,6 @@ snapshots:
 
   '@intlify/shared@11.2.8': {}
 
-  '@isaacs/balanced-match@4.0.1': {}
-
-  '@isaacs/brace-expansion@5.0.1':
-    dependencies:
-      '@isaacs/balanced-match': 4.0.1
-
   '@isaacs/cliui@8.0.2':
     dependencies:
       string-width: 5.1.2
@@ -6589,7 +6580,7 @@ snapshots:
 
   '@isaacs/fs-minipass@4.0.1':
     dependencies:
-      minipass: 7.1.2
+      minipass: 7.1.3
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -7870,7 +7861,7 @@ snapshots:
 
   '@types/yauzl@2.10.3':
     dependencies:
-      '@types/node': 22.19.10
+      '@types/node': 25.2.2
     optional: true
 
   '@typescript-eslint/eslint-plugin@8.55.0(@typescript-eslint/parser@8.55.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)':
@@ -8257,7 +8248,7 @@ snapshots:
       js-yaml: 4.1.1
       json5: 2.2.3
       lazy-val: 1.0.5
-      minimatch: 10.1.2
+      minimatch: 10.2.5
       plist: 3.1.0
       proper-lockfile: 4.1.2
       resedit: 1.7.2
@@ -8456,7 +8447,7 @@ snapshots:
       fs-minipass: 3.0.3
       glob: 10.4.5
       lru-cache: 10.4.3
-      minipass: 7.1.2
+      minipass: 7.1.3
       minipass-collect: 2.0.1
       minipass-flush: 1.0.5
       minipass-pipeline: 1.2.4
@@ -9437,7 +9428,7 @@ snapshots:
 
   fs-minipass@3.0.3:
     dependencies:
-      minipass: 7.1.2
+      minipass: 7.1.3
 
   fs.realpath@1.0.0: {}
 
@@ -9529,7 +9520,7 @@ snapshots:
       foreground-child: 3.3.1
       jackspeak: 3.4.3
       minimatch: 9.0.5
-      minipass: 7.1.2
+      minipass: 7.1.3
       package-json-from-dist: 1.0.1
       path-scurry: 1.11.1
 
@@ -10045,7 +10036,7 @@ snapshots:
       '@npmcli/agent': 3.0.0
       cacache: 19.0.1
       http-cache-semantics: 4.2.0
-      minipass: 7.1.2
+      minipass: 7.1.3
       minipass-fetch: 4.0.1
       minipass-flush: 1.0.5
       minipass-pipeline: 1.2.4
@@ -10115,10 +10106,6 @@ snapshots:
 
   mimic-response@3.1.0: {}
 
-  minimatch@10.1.2:
-    dependencies:
-      '@isaacs/brace-expansion': 5.0.1
-
   minimatch@10.2.5:
     dependencies:
       brace-expansion: 5.0.6
@@ -10139,11 +10126,11 @@ snapshots:
 
   minipass-collect@2.0.1:
     dependencies:
-      minipass: 7.1.2
+      minipass: 7.1.3
 
   minipass-fetch@4.0.1:
     dependencies:
-      minipass: 7.1.2
+      minipass: 7.1.3
       minipass-sized: 1.0.3
       minizlib: 3.1.0
     optionalDependencies:
@@ -10165,13 +10152,11 @@ snapshots:
     dependencies:
       yallist: 4.0.0
 
-  minipass@7.1.2: {}
-
   minipass@7.1.3: {}
 
   minizlib@3.1.0:
     dependencies:
-      minipass: 7.1.2
+      minipass: 7.1.3
 
   mitt@3.0.1: {}
 
@@ -10413,7 +10398,7 @@ snapshots:
   path-scurry@1.11.1:
     dependencies:
       lru-cache: 10.4.3
-      minipass: 7.1.2
+      minipass: 7.1.3
 
   path-scurry@2.0.2:
     dependencies:
@@ -11046,7 +11031,7 @@ snapshots:
 
   ssri@12.0.0:
     dependencies:
-      minipass: 7.1.2
+      minipass: 7.1.3
 
   stat-mode@1.0.0: {}
 
@@ -11147,7 +11132,7 @@ snapshots:
     dependencies:
       '@isaacs/fs-minipass': 4.0.1
       chownr: 3.0.0
-      minipass: 7.1.2
+      minipass: 7.1.3
       minizlib: 3.1.0
       yallist: 5.0.0
 

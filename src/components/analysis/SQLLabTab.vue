@@ -243,7 +243,7 @@ async function generateAndRunSQL() {
         { role: 'user', content: fullPrompt },
       ],
       { temperature: 0.1, maxTokens: 4096 },
-      (chunk: LLMChatStreamChunk) => {
+      (chunk) => {
         if (chunk.thinking !== undefined) {
           if (chunk.thinkingDone) {
             isThinking.value = false

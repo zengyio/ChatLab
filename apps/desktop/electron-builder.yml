@@ -14,11 +14,10 @@ directories:
 files:
   - out/**/*
   - '!**/.vscode/*'
-  - '!src/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
   - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
-  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!{tsconfig.json,tsconfig.node.json}'
   # jieba 词库文件已改为启动时远程下载，无需打包内置
   - '!node_modules/@node-rs/jieba/dict.txt'
   - '!node_modules/@node-rs/jieba/idf.txt'

@@ -11,14 +11,14 @@ import type { ChatLabOutput } from '@openchatlab/node-runtime'
 import { importData } from '../database/core'
 import { TempDbReader } from './tempCache'
 import { getPathProvider } from '../path-context'
-import type { ChatPlatform, ChatType } from '../../../src/types/base'
+import type { ChatPlatform, ChatType } from '../../../../src/types/base'
 import type {
   ChatLabFormat,
   ChatLabMessage,
   ConflictCheckResult,
   MergeParams,
   MergeResult,
-} from '../../../src/types/format'
+} from '../../../../src/types/format'
 
 function getDefaultOutputDir(): string {
   return getPathProvider().getDownloadsDir()

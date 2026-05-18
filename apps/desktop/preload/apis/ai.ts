@@ -2,7 +2,7 @@
  * AI 相关 API - AI 对话、LLM 服务、Agent、Embedding
  */
 import { ipcRenderer } from 'electron'
-import type { ExportProgress } from '../../../src/types/base'
+import type { ExportProgress } from '../../../../src/types/base'
 
 // ==================== 类型定义 ====================
 

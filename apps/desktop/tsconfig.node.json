@@ -1,0 +1,29 @@
+{
+  "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
+  "include": [
+    "electron.vite.config.*",
+    "main/**/*",
+    "preload/**/*",
+    "shared/**/*",
+    "../../src/types/**/*",
+    "../../packages/shared-types/**/*",
+    "../../packages/core/**/*",
+    "../../packages/node-runtime/**/*",
+    "../../packages/config/**/*",
+    "../../packages/parser/**/*",
+    "../../packages/server/**/*",
+    "../../packages/tools/**/*",
+    "../../packages/sync/**/*"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "types": ["electron-vite/node"],
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["../../src/*"],
+      "@electron/*": ["./*"],
+      "@openchatlab/*": ["../../packages/*"]
+    }
+  }
+}

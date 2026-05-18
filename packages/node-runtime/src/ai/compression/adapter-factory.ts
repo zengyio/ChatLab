@@ -1,8 +1,13 @@
-import { completeSimple, type Model as PiModel, type TextContent as PiTextContent } from '@mariozechner/pi-ai'
+import {
+  completeSimple,
+  type Model as PiModel,
+  type Api as PiApi,
+  type TextContent as PiTextContent,
+} from '@mariozechner/pi-ai'
 import type { CompressionLlmAdapter } from './types'
 
 export interface CreateCompressionLlmAdapterOptions {
-  piModel: PiModel
+  piModel: PiModel<PiApi>
   apiKey: string
   contextWindow?: number
   onCompressing?: () => void

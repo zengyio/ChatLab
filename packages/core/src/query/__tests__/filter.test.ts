@@ -35,7 +35,9 @@ type LightRow = { id: number; ts: number; senderId: number; content: string | nu
 function createMockDb(lightRows: LightRow[], fullRows: FullMessageRow[]): DatabaseAdapter {
   let callCount = 0
   return {
-    exec() {},
+    exec() {
+      /* no-op for test */
+    },
     prepare(): PreparedStatement {
       callCount++
       const isLightQuery = callCount === 1
@@ -63,7 +65,9 @@ function createMockDb(lightRows: LightRow[], fullRows: FullMessageRow[]): Databa
     pragma() {
       return undefined
     },
-    close() {},
+    close() {
+      /* no-op for test */
+    },
   }
 }
 

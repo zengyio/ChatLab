@@ -6,7 +6,7 @@
  *
  * 与 Electron renderer 构建的关键区别：
  * - __IS_ELECTRON__ = false（使用 FetchAdapter 而非 window.chatApi）
- * - 不包含 electron/preload 和 electron/main
+ * - 不包含 apps/desktop/preload 和 apps/desktop/main
  * - 输出目录独立（dist-web/ vs out/renderer/）
  */
 
@@ -106,8 +106,8 @@ export default defineConfig({
       '@': resolve(__dirname, 'src/'),
       '~': resolve(__dirname, 'src/'),
       '@openchatlab': resolve(__dirname, 'packages'),
-      '@electron/shared': resolve(__dirname, 'electron/shared'),
-      '@electron/preload': resolve(__dirname, 'electron/preload'),
+      '@electron/shared': resolve(__dirname, 'apps/desktop/shared'),
+      '@electron/preload': resolve(__dirname, 'apps/desktop/preload'),
     },
   },
   define: {

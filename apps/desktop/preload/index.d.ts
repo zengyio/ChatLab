@@ -1,5 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-import type { AnalysisSession, MessageType, ImportProgress, ExportProgress } from '../../src/types/base'
+import type { AnalysisSession, MessageType, ImportProgress, ExportProgress } from '../../../src/types/base'
 import type { TokenUsage, AgentRuntimeStatus, SerializedErrorInfo } from '../shared/types'
 import type {
   MemberActivity,
@@ -15,10 +15,10 @@ import type {
   ClusterGraphData,
   ClusterGraphOptions,
   RelationshipStats,
-} from '../../src/types/analysis'
-import type { FileParseInfo, ConflictCheckResult, MergeParams, MergeResult } from '../../src/types/format'
-import type { LanguagePreferenceResult } from '../../src/types/quotes/languagePreference'
-import type { TableSchema, SQLResult } from '../../src/components/analysis/SQLLab/types'
+} from '../../../src/types/analysis'
+import type { FileParseInfo, ConflictCheckResult, MergeParams, MergeResult } from '../../../src/types/format'
+import type { LanguagePreferenceResult } from '../../../src/types/quotes/languagePreference'
+import type { TableSchema, SQLResult } from '../../../src/components/analysis/SQLLab/types'
 
 import type { TimeFilter } from '@openchatlab/shared-types'
 

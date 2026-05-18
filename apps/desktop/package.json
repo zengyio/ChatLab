@@ -1,0 +1,33 @@
+{
+  "name": "@openchatlab/desktop",
+  "version": "0.19.0",
+  "private": true,
+  "description": "ChatLab Desktop — Electron 桌面客户端",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "preview": "electron-vite preview",
+    "build": "electron-vite build",
+    "build:mac": "pnpm run build && electron-builder --mac --config electron-builder.yml -p never",
+    "build:win": "pnpm run build && electron-builder --win --config electron-builder.yml -p never",
+    "build:linux": "pnpm run build && electron-builder --linux --config electron-builder.yml -p never",
+    "postinstall": "electron-rebuild"
+  },
+  "dependencies": {
+    "@aptabase/electron": "^0.3.1",
+    "@electron-toolkit/preload": "^3.0.1",
+    "@electron-toolkit/utils": "^4.0.0",
+    "@node-rs/jieba": "^2.0.1",
+    "better-sqlite3": "^12.4.6",
+    "electron-updater": "^6.6.2",
+    "i18next": "^25.8.5"
+  },
+  "devDependencies": {
+    "@electron-toolkit/tsconfig": "^1.0.1",
+    "@electron/rebuild": "^4.0.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "electron": "^35.0.0",
+    "electron-builder": "^26.0.12",
+    "electron-vite": "^3.0.0"
+  }
+}

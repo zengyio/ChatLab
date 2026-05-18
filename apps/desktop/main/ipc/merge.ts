@@ -7,7 +7,7 @@ import * as worker from '../worker/workerManager'
 import * as merger from '../merger'
 import { deleteTempDatabase, cleanupAllTempDatabases } from '../merger/tempCache'
 import type { ParseProgress } from '../parser'
-import type { MergeParams } from '../../../src/types/format'
+import type { MergeParams } from '../../../../src/types/format'
 import type { IpcContext } from './types'
 
 // ==================== 临时数据库缓存 ====================

@@ -3,13 +3,15 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import vue from '@vitejs/plugin-vue'
 import ui from '@nuxt/ui/vite'
 
+const rootDir = resolve(__dirname, '../..')
+
 export default defineConfig(() => {
   return {
     main: {
       plugins: [externalizeDepsPlugin()],
       resolve: {
         alias: {
-          '@openchatlab': resolve('packages'),
+          '@openchatlab': resolve(rootDir, 'packages'),
         },
       },
       define: {
@@ -21,8 +23,8 @@ export default defineConfig(() => {
       build: {
         rollupOptions: {
           input: {
-            index: resolve(__dirname, 'electron/main/index.ts'),
-            'worker/dbWorker': resolve(__dirname, 'electron/main/worker/dbWorker.ts'),
+            index: resolve(__dirname, 'main/index.ts'),
+            'worker/dbWorker': resolve(__dirname, 'main/worker/dbWorker.ts'),
           },
         },
       },
@@ -31,13 +33,13 @@ export default defineConfig(() => {
       plugins: [externalizeDepsPlugin()],
       resolve: {
         alias: {
-          '@openchatlab': resolve('packages'),
+          '@openchatlab': resolve(rootDir, 'packages'),
         },
       },
       build: {
         rollupOptions: {
           input: {
-            index: resolve(__dirname, 'electron/preload/index.ts'),
+            index: resolve(__dirname, 'preload/index.ts'),
           },
         },
       },
@@ -45,9 +47,10 @@ export default defineConfig(() => {
     renderer: {
       resolve: {
         alias: {
-          '@': resolve('src/'),
-          '~': resolve('src/'),
-          '@openchatlab': resolve('packages'),
+          '@': resolve(rootDir, 'src/'),
+          '~': resolve(rootDir, 'src/'),
+          '@openchatlab': resolve(rootDir, 'packages'),
+          '@electron': resolve(__dirname),
         },
       },
       define: {
@@ -64,12 +67,12 @@ export default defineConfig(() => {
           },
         }),
       ],
-      root: 'src/',
+      root: resolve(rootDir, 'src/'),
       build: {
         sourcemap: false,
         rollupOptions: {
           input: {
-            index: resolve(__dirname, 'src/index.html'),
+            index: resolve(rootDir, 'src/index.html'),
           },
           output: {
             manualChunks(id) {

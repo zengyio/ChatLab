@@ -6,6 +6,10 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "@openchatlab/shared-types": "workspace:*"
+    "@openchatlab/shared-types": "workspace:*",
+    "stream-json": "^1.9.1"
+  },
+  "devDependencies": {
+    "@types/stream-json": "^1.7.8"
   }
 }

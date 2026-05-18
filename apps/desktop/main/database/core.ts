@@ -13,7 +13,7 @@ import {
   renameSession as coreRenameSession,
 } from '@openchatlab/core'
 import { BetterSqliteAdapter, writeParseResultToDb } from '@openchatlab/node-runtime'
-import type { ParseResult } from '../../../src/types/base'
+import type { ParseResult } from '../../../../src/types/base'
 import { migrateDatabase, needsMigration, CURRENT_SCHEMA_VERSION } from './migrations'
 import { getPathProvider } from '../path-context'
 import { ensureDir } from '../paths'

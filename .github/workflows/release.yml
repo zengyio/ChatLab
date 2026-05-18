@@ -90,18 +90,19 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           # 分析服务
           APTABASE_APP_KEY: ${{ secrets.APTABASE_APP_KEY }}
-        run: pnpm build && pnpm exec electron-builder --mac --${{ matrix.arch }} --config electron-builder.yml -p never
+        working-directory: apps/desktop
+        run: pnpm run build && pnpm exec electron-builder --mac --${{ matrix.arch }} --config electron-builder.yml -p never
 
       - name: Upload macOS artifacts (${{ matrix.arch }})
         uses: actions/upload-artifact@v6
         with:
           name: ChatLab-mac-${{ matrix.arch }}
           path: |
-            dist/*.dmg
-            dist/*.zip
-            dist/*.yml
-            dist/*.json
-            dist/*.blockmap
+            apps/desktop/dist/*.dmg
+            apps/desktop/dist/*.zip
+            apps/desktop/dist/*.yml
+            apps/desktop/dist/*.json
+            apps/desktop/dist/*.blockmap
           if-no-files-found: warn
           retention-days: 1 # 只保留1天，Release后会上传到GitHub Releases
 
@@ -153,17 +154,18 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           # 分析服务
           APTABASE_APP_KEY: ${{ secrets.APTABASE_APP_KEY }}
-        run: pnpm build:win
+        working-directory: apps/desktop
+        run: pnpm run build && pnpm exec electron-builder --win --config electron-builder.yml -p never
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v6
         with:
           name: ChatLab-win
           path: |
-            dist/*.exe
-            dist/*.yml
-            dist/*.json
-            dist/*.blockmap
+            apps/desktop/dist/*.exe
+            apps/desktop/dist/*.yml
+            apps/desktop/dist/*.json
+            apps/desktop/dist/*.blockmap
           if-no-files-found: warn
           retention-days: 1 # 只保留1天，Release后会上传到GitHub Releases
 
@@ -221,11 +223,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           APTABASE_APP_KEY: ${{ secrets.APTABASE_APP_KEY }}
+        working-directory: apps/desktop
         run: |
+          pnpm run build
           if [ "${{ matrix.arch }}" = "arm64" ]; then
-            pnpm run build && pnpm exec electron-builder --linux deb --arm64 --config electron-builder.yml -p never
+            pnpm exec electron-builder --linux deb --arm64 --config electron-builder.yml -p never
           else
-            pnpm build:linux
+            pnpm exec electron-builder --linux --config electron-builder.yml -p never
           fi
 
       - name: Upload Linux artifacts (${{ matrix.arch }})
@@ -233,11 +237,11 @@ jobs:
         with:
           name: ChatLab-linux-${{ matrix.arch }}
           path: |
-            dist/*.AppImage
-            dist/*.deb
-            dist/*.tar.gz
-            dist/*.yml
-            dist/*.json
+            apps/desktop/dist/*.AppImage
+            apps/desktop/dist/*.deb
+            apps/desktop/dist/*.tar.gz
+            apps/desktop/dist/*.yml
+            apps/desktop/dist/*.json
           if-no-files-found: warn
           retention-days: 1
 
@@ -254,34 +258,34 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: ChatLab-mac-x64
-          path: dist
+          path: release-dist
 
       - name: Download macOS artifacts (arm64)
         uses: actions/download-artifact@v8
         with:
           name: ChatLab-mac-arm64
-          path: dist
+          path: release-dist
 
       - name: Download Windows artifacts
         uses: actions/download-artifact@v8
         with:
           name: ChatLab-win
-          path: dist
+          path: release-dist
 
       - name: Download Linux artifacts
         uses: actions/download-artifact@v8
         with:
           name: ChatLab-linux-x64
-          path: dist
+          path: release-dist
 
       - name: Download Linux artifacts (arm64)
         uses: actions/download-artifact@v8
         with:
           name: ChatLab-linux-arm64
-          path: dist
+          path: release-dist
 
       - name: List files
-        run: ls -la dist/
+        run: ls -la release-dist/
 
       - name: Generate Release Notes
         id: release_notes
@@ -297,8 +301,8 @@ jobs:
           echo "Current version: $CURRENT_VERSION"
 
           # 从 changelog JSON 中提取最新版本的 summary
-          EN_SUMMARY=$(jq -r '.[0].summary' docs/public/changelogs/en.json)
-          CN_SUMMARY=$(jq -r '.[0].summary' docs/public/changelogs/cn.json)
+          EN_SUMMARY=$(jq -r '.[0].summary' docs/public/changelogs/en.json 2>/dev/null || echo "See changelog for details")
+          CN_SUMMARY=$(jq -r '.[0].summary' docs/public/changelogs/cn.json 2>/dev/null || echo "详见更新日志")
 
           echo "EN summary: $EN_SUMMARY"
           echo "CN summary: $CN_SUMMARY"
@@ -339,14 +343,14 @@ jobs:
           name: ChatLab ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
           body_path: release_notes.md
           files: |
-            dist/*.exe
-            dist/*.dmg
-            dist/*.zip
-            dist/*.AppImage
-            dist/*.deb
-            dist/*.tar.gz
-            dist/*.yml
-            dist/*.blockmap
+            release-dist/*.exe
+            release-dist/*.dmg
+            release-dist/*.zip
+            release-dist/*.AppImage
+            release-dist/*.deb
+            release-dist/*.tar.gz
+            release-dist/*.yml
+            release-dist/*.blockmap
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -380,7 +384,7 @@ jobs:
           r2-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
           r2-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           r2-bucket: ${{ secrets.R2_BUCKET_NAME }}
-          source-dir: dist
+          source-dir: release-dist
           destination-dir: releases/download/${{ steps.version.outputs.tag }}
 
       # 准备 yml 文件用于根目录上传
@@ -392,7 +396,7 @@ jobs:
           VERSION_TAG="${{ steps.version.outputs.tag }}"
 
           # 处理所有 yml 文件
-          for yml_file in dist/*.yml; do
+          for yml_file in release-dist/*.yml; do
             filename=$(basename "$yml_file")
             echo "Processing $filename..."
 

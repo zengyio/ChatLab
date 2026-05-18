@@ -25,7 +25,7 @@ export type {
   LLMConnectionConfigCompat,
   ModelUsage,
   ModelSelectionState,
-} from '../../electron/main/ai/llm/model-types'
+} from '../main/ai/llm/model-types'
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

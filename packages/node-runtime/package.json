@@ -9,7 +9,14 @@
     "@mariozechner/pi-agent-core": "0.54.2",
     "@mariozechner/pi-ai": "0.54.2",
     "@openchatlab/core": "workspace:*",
+    "better-sqlite3": "^12.4.6",
     "gray-matter": "^4.0.3",
     "js-tiktoken": "^1.0.21"
+  },
+  "optionalDependencies": {
+    "@node-rs/jieba": "^2.0.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13"
   }
 }

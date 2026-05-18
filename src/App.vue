@@ -57,10 +57,10 @@ onMounted(async () => {
     document.documentElement.classList.add('platform-linux')
   }
 
-  // 初始化语言设置（同步 i18n 和 dayjs，异步加载脱敏规则）
-  await settingsStore.initLocale()
-  // 初始化 Service 层（按领域注册 Adapter）
+  // 初始化 Service 层（按领域注册 Adapter），必须在其他依赖 Adapter 的逻辑之前
   await initServices()
+  // 初始化语言设置（同步 i18n 和 dayjs，异步加载脱敏规则 — 依赖 AI adapter）
+  await settingsStore.initLocale()
   // 初始化 LLM 配置（预加载，避免首次使用时延迟）
   llmStore.init()
   // 从数据库加载会话列表
