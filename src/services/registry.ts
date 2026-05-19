@@ -77,6 +77,9 @@ async function initElectronAdapters(): Promise<void> {
 
   const { ElectronAIAdapter } = await import('./ai/electron')
   registerAdapter('ai', new ElectronAIAdapter())
+
+  const { ElectronPreferencesAdapter } = await import('./preferences/electron')
+  registerAdapter('preferences', new ElectronPreferencesAdapter())
 }
 
 async function initWebServeAdapters(): Promise<void> {
@@ -97,6 +100,9 @@ async function initWebServeAdapters(): Promise<void> {
 
   const { FetchAIAdapter } = await import('./ai/fetch')
   registerAdapter('ai', new FetchAIAdapter())
+
+  const { FetchPreferencesAdapter } = await import('./preferences/fetch')
+  registerAdapter('preferences', new FetchPreferencesAdapter())
 
   await installChartPluginShims()
   await installNlpApiShim()

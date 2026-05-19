@@ -1159,6 +1159,15 @@ interface SessionApi {
   >
 }
 
+interface PreferencesApi {
+  get: () => Promise<Record<string, unknown>>
+  save: (partial: Record<string, unknown>) => Promise<{ success: boolean; error?: string }>
+  getUiConfig: () => Promise<Record<string, unknown>>
+  saveUiConfig: (partial: Record<string, unknown>) => Promise<{ success: boolean; error?: string }>
+  getLocale: () => Promise<string>
+  saveLocale: (lang: string) => Promise<{ success: boolean; error?: string }>
+}
+
 declare global {
   interface Window {
     electron: ElectronAPI
@@ -1175,6 +1184,7 @@ declare global {
     sessionApi: SessionApi
     nlpApi: NlpApi
     apiServerApi: ApiServerApi
+    preferencesApi: PreferencesApi
   }
 }
 
@@ -1237,4 +1247,5 @@ export {
   ApiServerStatus,
   DataSource,
   ImportSession,
+  PreferencesApi,
 }

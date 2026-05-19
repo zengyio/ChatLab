@@ -45,6 +45,15 @@ export type { MessageAdapter, TimeFilter, MessageRecord, PaginatedMessages, Sear
 export { usePlatformService } from './platform/service'
 export type { PlatformAdapter, OpenDialogOptions, OpenDialogResult, RemoteConfigResult } from './platform/types'
 export { useAIService } from './ai/service'
+export { usePreferencesService } from './preferences/service'
+export type {
+  PreferencesAdapter,
+  Preferences,
+  UiConfig,
+  AIGlobalSettings,
+  AIPreprocessConfig,
+  WordFilterScheme as PreferencesWordFilterScheme,
+} from './preferences/types'
 export type {
   AIAdapter,
   AIConversation,

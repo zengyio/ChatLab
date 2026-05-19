@@ -12,6 +12,7 @@ import { useSessionStore, type BatchFileInfo, type MergeFileInfo } from '@/store
 import { useDataService, useImportService, useSessionIndexService, usePlatformService } from '@/services'
 import { IS_ELECTRON } from '@/utils/platform'
 import DemoImportButton from './DemoImportButton.vue'
+import { getSessionGapThreshold } from '@/composables/useUiConfig'
 
 const { t } = useI18n()
 const sessionStore = useSessionStore()
@@ -39,8 +40,7 @@ const formatSelectorFilePath = ref('')
 
 async function autoGenerateSessionIndex(sessionId: string) {
   try {
-    const savedThreshold = localStorage.getItem('sessionGapThreshold')
-    const gapThreshold = savedThreshold ? parseInt(savedThreshold, 10) : 1800
+    const gapThreshold = getSessionGapThreshold()
     await useSessionIndexService().generate(sessionId, gapThreshold)
   } catch (error) {
     console.error('自动生成会话索引失败:', error)

@@ -11,6 +11,7 @@ import { chatApi, mergeApi } from './apis/chat'
 import { aiApi, llmApi, agentApi, assistantApi, skillApi } from './apis/ai'
 import { nlpApi, networkApi, cacheApi, sessionApi } from './apis/utils'
 import { apiServerApi } from './apis/api-server'
+import { preferencesApi } from './apis/preferences'
 
 // 为渲染进程提供统一的类型入口，避免 type-only import 指向无导出的运行时代码。
 export type { PreprocessConfig } from './apis/ai'
@@ -46,6 +47,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('sessionApi', sessionApi)
     contextBridge.exposeInMainWorld('nlpApi', nlpApi)
     contextBridge.exposeInMainWorld('apiServerApi', apiServerApi)
+    contextBridge.exposeInMainWorld('preferencesApi', preferencesApi)
   } catch (error) {
     console.error(error)
   }
@@ -78,4 +80,6 @@ if (process.contextIsolated) {
   window.nlpApi = nlpApi
   // @ts-ignore (define in dts)
   window.apiServerApi = apiServerApi
+  // @ts-ignore (define in dts)
+  window.preferencesApi = preferencesApi
 }

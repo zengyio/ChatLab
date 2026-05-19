@@ -6,6 +6,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDataService, useSessionIndexService } from '@/services'
+import { getSessionGapThreshold, patchUiConfig } from '@/composables/useUiConfig'
 
 const { t } = useI18n()
 
@@ -41,20 +42,15 @@ const batchProgressPercent = computed(() => {
   return Math.round((batchProgress.value.current / batchProgress.value.total) * 100)
 })
 
-// 保存会话阈值（这里只是保存到本地存储，实际每个 session 的阈值在生成时传入）
 function saveSessionThreshold() {
   if (sessionGapMinutes.value < 1) sessionGapMinutes.value = 1
   if (sessionGapMinutes.value > 1440) sessionGapMinutes.value = 1440
-  // 保存到 localStorage 作为全局默认值
-  localStorage.setItem('sessionGapThreshold', String(sessionGapMinutes.value * 60))
+  patchUiConfig({ session_gap_threshold: sessionGapMinutes.value * 60 })
 }
 
-// 加载会话阈值
 function loadSessionThreshold() {
-  const saved = localStorage.getItem('sessionGapThreshold')
-  if (saved) {
-    sessionGapMinutes.value = Math.round(parseInt(saved, 10) / 60)
-  }
+  const threshold = getSessionGapThreshold()
+  sessionGapMinutes.value = Math.round(threshold / 60)
 }
 
 // 加载所有会话的索引状态

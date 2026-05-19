@@ -23,7 +23,12 @@ export const apiConfigSchema = z.object({
 })
 
 export const localeConfigSchema = z.object({
-  lang: z.string().default('zh-CN'),
+  lang: z.string().default(''),
+})
+
+export const uiConfigSchema = z.object({
+  default_session_tab: z.enum(['overview', 'ai-chat']).default('overview'),
+  session_gap_threshold: z.number().int().min(60).max(86400).default(1800),
 })
 
 export const configSchema = z.object({
@@ -31,6 +36,7 @@ export const configSchema = z.object({
   data: dataConfigSchema.default({}),
   api: apiConfigSchema.default({}),
   locale: localeConfigSchema.default({}),
+  ui: uiConfigSchema.default({}),
 })
 
 export type ChatLabConfig = z.infer<typeof configSchema>
@@ -38,3 +44,4 @@ export type LlmConfig = z.infer<typeof llmConfigSchema>
 export type DataConfig = z.infer<typeof dataConfigSchema>
 export type ApiConfig = z.infer<typeof apiConfigSchema>
 export type LocaleConfig = z.infer<typeof localeConfigSchema>
+export type UiConfig = z.infer<typeof uiConfigSchema>

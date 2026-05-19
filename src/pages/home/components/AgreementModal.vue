@@ -13,13 +13,10 @@ const { t } = useI18n()
 const settingsStore = useSettingsStore()
 const { locale } = storeToRefs(settingsStore)
 
-// 协议版本号（更新协议时修改此版本号）
 const AGREEMENT_VERSION = '2.0'
 const AGREEMENT_KEY = 'chatlab_agreement_version'
 
-// 弹窗显示状态（由父组件通过 open() 控制）
 const isOpen = ref(false)
-// 是否为版本更新导致的重新阅读
 const isVersionUpdated = ref(false)
 
 // 创建 markdown-it 实例
@@ -51,20 +48,16 @@ const agreementText = computed(() => {
 // 渲染后的 HTML
 const renderedContent = computed(() => md.render(agreementText.value))
 
-// 同意协议
 function handleAgree() {
   localStorage.setItem(AGREEMENT_KEY, AGREEMENT_VERSION)
   isOpen.value = false
 }
 
-// 不同意协议，退出应用
 function handleDisagree() {
-  // 不同意时清除已存的协议版本
   localStorage.removeItem(AGREEMENT_KEY)
   window.api?.send?.('window-close')
 }
 
-// 打开弹窗（供外部调用）
 function open() {
   const acceptedVersion = localStorage.getItem(AGREEMENT_KEY)
   if (acceptedVersion && acceptedVersion !== AGREEMENT_VERSION) {
@@ -73,9 +66,6 @@ function open() {
   isOpen.value = true
 }
 
-/**
- * 检查是否需要同意协议（版本不匹配或从未同意）
- */
 function needsAgreement(): boolean {
   return localStorage.getItem(AGREEMENT_KEY) !== AGREEMENT_VERSION
 }

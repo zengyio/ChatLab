@@ -1,15 +1,18 @@
 <script setup lang="ts">
 /**
  * 筛选历史记录弹窗
- * 使用 localStorage 存储历史记录（后续可改为 SQLite）
+ * 通过 preferences.json 跨端同步历史记录
  */
 
 import { ref, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSessionStore } from '@/stores/session'
+import { usePreferencesService } from '@/services'
+import type { FilterHistoryItem } from '@openchatlab/shared-types'
 
 const { t } = useI18n()
 const sessionStore = useSessionStore()
+const svc = usePreferencesService()
 
 // Props
 const open = defineModel<boolean>('open', { default: false })
@@ -30,69 +33,35 @@ const emit = defineEmits<{
   ]
 }>()
 
-// 历史记录类型
-interface FilterHistoryItem {
-  id: string
-  sessionId: string
-  createdAt: number
-  name: string
-  mode: 'condition' | 'session'
-  conditionFilter?: {
-    keywords: string[]
-    timeRange: { start: number; end: number } | null
-    senderIds: number[]
-    contextSize: number
-  }
-  selectedSessionIds?: number[]
-}
-
-// 历史记录列表
 const historyList = ref<FilterHistoryItem[]>([])
+let allHistory: FilterHistoryItem[] = []
 
-// 编辑模式
 const editingId = ref<string | null>(null)
 const editingName = ref('')
 
-// 存储键
-const STORAGE_KEY = 'chatlab_filter_history'
-
-// 加载历史记录
-function loadHistory() {
+async function loadHistory() {
   try {
-    const data = localStorage.getItem(STORAGE_KEY)
-    if (data) {
-      const allHistory: FilterHistoryItem[] = JSON.parse(data)
-      // 过滤当前会话的历史
-      historyList.value = allHistory.filter((h) => h.sessionId === sessionStore.currentSessionId)
-    }
+    const prefs = await svc.getPreferences()
+    allHistory = prefs.filterHistory ?? []
+    historyList.value = allHistory.filter((h) => h.sessionId === sessionStore.currentSessionId)
   } catch (error) {
-    console.error('加载历史记录失败:', error)
+    console.error('Failed to load filter history:', error)
   }
 }
 
-// 保存历史记录
 function saveHistory() {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY)
-    let allHistory: FilterHistoryItem[] = data ? JSON.parse(data) : []
-
-    // 移除当前会话的历史，然后添加新的
-    allHistory = allHistory.filter((h) => h.sessionId !== sessionStore.currentSessionId)
-    allHistory = [...allHistory, ...historyList.value]
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(allHistory))
-  } catch (error) {
-    console.error('保存历史记录失败:', error)
-  }
+  const otherHistory = allHistory.filter((h) => h.sessionId !== sessionStore.currentSessionId)
+  allHistory = [...otherHistory, ...historyList.value]
+  svc.savePreferences({ filterHistory: allHistory }).catch((err) => {
+    console.error('Failed to save filter history:', err)
+  })
 }
 
-// 删除历史记录
 function deleteHistory(id: string) {
   historyList.value = historyList.value.filter((h) => h.id !== id)
   saveHistory()
 }
 
-// 加载历史条件
 function loadCondition(item: FilterHistoryItem) {
   emit('load', {
     mode: item.mode,
@@ -101,30 +70,25 @@ function loadCondition(item: FilterHistoryItem) {
   })
 }
 
-// 开始编辑名称
 function startEdit(item: FilterHistoryItem) {
   editingId.value = item.id
   editingName.value = item.name
 }
 
-// 保存名称
 function saveName(item: FilterHistoryItem) {
   item.name = editingName.value || item.name
   editingId.value = null
   saveHistory()
 }
 
-// 取消编辑
 function cancelEdit() {
   editingId.value = null
 }
 
-// 格式化时间
 function formatTime(ts: number): string {
   return new Date(ts).toLocaleString()
 }
 
-// 格式化条件摘要
 function formatSummary(item: FilterHistoryItem): string {
   if (item.mode === 'condition') {
     const parts: string[] = []
@@ -140,7 +104,6 @@ function formatSummary(item: FilterHistoryItem): string {
   }
 }
 
-// 监听打开状态
 watch(open, (val) => {
   if (val) {
     loadHistory()
@@ -151,7 +114,6 @@ onMounted(() => {
   loadHistory()
 })
 
-// 暴露保存方法供外部使用
 defineExpose({
   saveCondition(condition: Omit<FilterHistoryItem, 'id' | 'sessionId' | 'createdAt' | 'name'>) {
     const newItem: FilterHistoryItem = {
@@ -162,7 +124,6 @@ defineExpose({
       ...condition,
     }
     historyList.value.unshift(newItem)
-    // 只保留最近 20 条
     historyList.value = historyList.value.slice(0, 20)
     saveHistory()
   },

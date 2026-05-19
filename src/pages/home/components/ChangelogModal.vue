@@ -27,9 +27,7 @@ const expandedState = ref<Map<string, boolean>>(new Map())
 // 当前软件版本（用于高亮显示和默认展开）
 const currentAppVersion = ref<string | null>(null)
 
-// 版本日志已读标记的 localStorage key
 const CHANGELOG_READ_KEY = 'chatlab_changelog_read_version'
-// 用户协议同意标记的 localStorage key
 const AGREEMENT_KEY = 'chatlab_agreement_version'
 
 // summary 的白名单配置（可按需扩展）
@@ -162,9 +160,7 @@ function markVersionAsRead(version: string) {
 async function checkNewVersion() {
   if (!IS_ELECTRON) return
   try {
-    // 0. 如果用户还没同意隐私协议，不检查更新日志（避免两个弹窗同时弹出）
-    const acceptedAgreement = localStorage.getItem(AGREEMENT_KEY)
-    if (!acceptedAgreement) {
+    if (!localStorage.getItem(AGREEMENT_KEY)) {
       return
     }
 

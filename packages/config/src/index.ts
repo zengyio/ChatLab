@@ -6,7 +6,7 @@
 
 export { loadConfig, getConfigPath, getConfigDir, writeConfigField } from './loader'
 export { configSchema } from './schema'
-export type { ChatLabConfig, LlmConfig, DataConfig, ApiConfig, LocaleConfig } from './schema'
+export type { ChatLabConfig, LlmConfig, DataConfig, ApiConfig, LocaleConfig, UiConfig } from './schema'
 export {
   loadAuthProfiles,
   getApiKeyByProfile,

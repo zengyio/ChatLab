@@ -6,6 +6,7 @@ import { useSessionStore } from '@/stores/session'
 import { useSettingsStore } from '@/stores/settings'
 import { getChatlabSiteLocalePath } from '@/utils/chatlabSiteLocale'
 import { useDataService, useImportService, useSessionIndexService } from '@/services'
+import { getSessionGapThreshold } from '@/composables/useUiConfig'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -43,9 +44,8 @@ async function handleImport() {
       await sessionStore.loadSessions()
       sessionStore.selectSession(result.groupSessionId)
 
-      const savedThreshold = localStorage.getItem('sessionGapThreshold')
-      const gapThreshold = savedThreshold ? parseInt(savedThreshold, 10) : 1800
       try {
+        const gapThreshold = getSessionGapThreshold()
         const sessionIndexService = useSessionIndexService()
         await sessionIndexService.generate(result.groupSessionId, gapThreshold)
         if (result.privateSessionId) {

@@ -124,11 +124,9 @@ export const usePromptStore = defineStore(
     }
   },
   {
-    persist: [
-      {
-        pick: ['customKeywordTemplates', 'deletedPresetTemplateIds', 'aiGlobalSettings'],
-        storage: localStorage,
-      },
-    ],
+    persist: false,
+    backendPersist: {
+      pick: ['aiGlobalSettings', 'customKeywordTemplates', 'deletedPresetTemplateIds'],
+    },
   }
 )

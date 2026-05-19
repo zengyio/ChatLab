@@ -223,6 +223,17 @@ export type { MigrationDeps } from './migrations'
 export { migrateFromElectronIfNeeded, verifyCliDataPath, wasElectronUsed } from './migrations'
 export type { ElectronMigrationResult } from './migrations'
 
+// Preferences manager (preferences.json)
+export { PreferencesManager } from './preferences'
+export type {
+  Preferences,
+  AIGlobalSettings,
+  AIPreprocessConfig,
+  WordFilterScheme,
+  KeywordTemplate,
+  ContextCompressionSettings,
+} from './preferences'
+
 // Merger orchestration
 export { checkConflictsFromSources, buildMergedOutput, serializeChatLabToJsonl } from './merger'
 export type {

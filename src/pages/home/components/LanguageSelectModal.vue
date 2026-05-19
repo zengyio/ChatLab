@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useSettingsStore } from '@/stores/settings'
 import UITabs from '@/components/UI/Tabs.vue'
 import { availableLocales, type LocaleType } from '@/i18n'
+import { usePreferencesService } from '@/services'
 
 const emit = defineEmits<{
   (e: 'done'): void
@@ -11,8 +12,6 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const settingsStore = useSettingsStore()
-
-const LOCALE_SET_KEY = 'chatlab_locale_set_by_user'
 
 const isOpen = ref(false)
 
@@ -28,24 +27,27 @@ const currentLocale = computed({
   set: (val: string | number) => settingsStore.setLocale(val as LocaleType),
 })
 
-onMounted(() => {
-  const hasUserSetLocale = localStorage.getItem(LOCALE_SET_KEY)
-  if (!hasUserSetLocale) {
+onMounted(async () => {
+  try {
+    const savedLocale = await usePreferencesService().getLocale()
+    if (!savedLocale) {
+      isOpen.value = true
+    }
+  } catch {
     isOpen.value = true
   }
 })
 
 function handleNext() {
-  localStorage.setItem(LOCALE_SET_KEY, 'true')
+  usePreferencesService()
+    .saveLocale(settingsStore.locale)
+    .catch(() => {})
   isOpen.value = false
   emit('done')
 }
 
-/**
- * 是否因为已有语言设置而跳过了弹窗（供父组件判断流程）
- */
 function wasSkipped(): boolean {
-  return !!localStorage.getItem(LOCALE_SET_KEY)
+  return !isOpen.value
 }
 
 defineExpose({ wasSkipped })

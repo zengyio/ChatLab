@@ -7,6 +7,7 @@
 import { ref, watch, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSessionIndexService } from '@/services'
+import { getSessionGapThreshold } from '@/composables/useUiConfig'
 
 const props = defineProps<{
   sessionId: string
@@ -87,10 +88,7 @@ async function generateSessionIndex() {
 
   isGenerating.value = true
   try {
-    // 从 localStorage 获取全局阈值配置
-    const savedThreshold = localStorage.getItem('sessionGapThreshold')
-    const gapThreshold = savedThreshold ? parseInt(savedThreshold, 10) : 1800 // 默认30分钟
-
+    const gapThreshold = getSessionGapThreshold()
     const count = await useSessionIndexService().generate(props.sessionId, gapThreshold)
     hasIndex.value = true
     sessionCount.value = count

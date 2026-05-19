@@ -127,9 +127,10 @@ export const useWordFilterStore = defineStore(
     }
   },
   {
-    persist: {
+    persist: false,
+    backendPersist: {
       pick: ['schemes', 'defaultSchemeId', 'sessionSchemeOverrides'],
-      storage: localStorage,
+      key: 'wordFilter',
     },
   }
 )

@@ -109,3 +109,91 @@ export interface ParsedMessage {
   content: string | null
   replyToMessageId?: string
 }
+
+// ==================== Preferences (跨端偏好设置) ====================
+
+export interface WordFilterScheme {
+  id: string
+  name: string
+  words: string[]
+  createdAt: number
+}
+
+export interface ContextCompressionSettings {
+  enabled: boolean
+  tokenThresholdPercent: number
+  bufferSizePercent: number
+  maxToolResultPercent: number
+}
+
+export interface AIGlobalSettings {
+  maxMessagesPerRequest: number
+  exportFormat: 'markdown' | 'txt'
+  sqlExportFormat: 'csv' | 'json'
+  enableAutoSkill: boolean
+  searchContextBefore: number
+  searchContextAfter: number
+  contextCompression: ContextCompressionSettings
+}
+
+export interface KeywordTemplate {
+  id: string
+  name: string
+  keywords: string[]
+  [key: string]: unknown
+}
+
+export interface DesensitizeRule {
+  id: string
+  label: string
+  pattern: string
+  replacement: string
+  enabled: boolean
+  builtin: boolean
+  locales: string[]
+}
+
+export interface AIPreprocessConfig {
+  dataCleaning: boolean
+  mergeConsecutive: boolean
+  mergeWindowSeconds: number
+  blacklistKeywords: string[]
+  denoise: boolean
+  desensitize: boolean
+  desensitizeRules: DesensitizeRule[]
+  anonymizeNames: boolean
+}
+
+export interface FilterHistoryItem {
+  id: string
+  sessionId: string
+  createdAt: number
+  name: string
+  mode: 'condition' | 'session'
+  conditionFilter?: {
+    keywords: string[]
+    timeRange: { start: number; end: number } | null
+    senderIds: number[]
+    contextSize: number
+  }
+  selectedSessionIds?: number[]
+}
+
+export interface Preferences {
+  pinnedSessionIds: string[]
+  aiPreprocessConfig: AIPreprocessConfig
+  aiGlobalSettings: AIGlobalSettings
+  customKeywordTemplates: KeywordTemplate[]
+  deletedPresetTemplateIds: string[]
+  wordFilter: {
+    schemes: WordFilterScheme[]
+    defaultSchemeId: string | null
+    sessionSchemeOverrides: Record<string, string | null>
+  }
+  filterHistory: FilterHistoryItem[]
+}
+
+export interface UiConfig {
+  default_session_tab: 'overview' | 'ai-chat'
+  session_gap_threshold: number
+}

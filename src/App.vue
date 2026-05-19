@@ -14,6 +14,7 @@ import { useLayoutStore } from '@/stores/layout'
 import { useSettingsStore } from '@/stores/settings'
 import { useLLMStore } from '@/stores/llm'
 import { initServices } from '@/services'
+import { initPreferencesSync } from '@/composables/usePreferencesSync'
 
 const { t } = useI18n()
 
@@ -59,6 +60,8 @@ onMounted(async () => {
 
   // 初始化 Service 层（按领域注册 Adapter），必须在其他依赖 Adapter 的逻辑之前
   await initServices()
+  // 从后端加载偏好设置并 hydrate stores
+  await initPreferencesSync()
   // 初始化语言设置（同步 i18n 和 dayjs，异步加载脱敏规则 — 依赖 AI adapter）
   await settingsStore.initLocale()
   // 初始化 LLM 配置（预加载，避免首次使用时延迟）

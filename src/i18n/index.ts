@@ -3,9 +3,8 @@ import zhCN from './locales/zh-CN'
 import enUS from './locales/en-US'
 import zhTW from './locales/zh-TW'
 import jaJP from './locales/ja-JP'
-import { detectSystemLocale, isValidLocale, type LocaleType } from './types'
+import { detectSystemLocale, type LocaleType } from './types'
 
-// 导出类型
 export type { LocaleType } from './types'
 export {
   availableLocales,
@@ -18,32 +17,11 @@ export {
   isValidLocale,
 } from './types'
 
-// 用于标记用户是否明确设置过语言的 key
-const LOCALE_SET_KEY = 'chatlab_locale_set_by_user'
-const PINIA_SETTINGS_KEY = 'settings' // Pinia persist 的 key
-
 /**
- * 获取初始语言（在应用启动时，越早越好）
- * - 如果用户之前设置过语言，从 Pinia persist 恢复
- * - 如果是首次使用，检测系统语言
+ * Determine initial locale via system language detection.
+ * The authoritative value is loaded async from config.toml during initPreferencesSync().
  */
 function getInitialLocale(): LocaleType {
-  const hasUserSetLocale = localStorage.getItem(LOCALE_SET_KEY)
-
-  if (hasUserSetLocale) {
-    try {
-      const piniaSettings = localStorage.getItem(PINIA_SETTINGS_KEY)
-      if (piniaSettings) {
-        const parsed = JSON.parse(piniaSettings)
-        if (isValidLocale(parsed.locale)) {
-          return parsed.locale
-        }
-      }
-    } catch {
-      // 解析失败，使用系统语言
-    }
-  }
-
   return detectSystemLocale()
 }
 

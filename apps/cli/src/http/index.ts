@@ -25,6 +25,7 @@ import { registerSessionRoutes } from './routes/sessions'
 import { registerWebRoutes } from './routes/web'
 import { registerNlpRoutes } from './routes/nlp'
 import { registerAiRoutes } from './routes/ai'
+import { registerPreferencesRoutes } from './routes/preferences'
 import { initServerAiLogger, closeServerAiLogger } from '../ai/logger'
 import { initSync, cleanupSync } from '../sync'
 
@@ -133,6 +134,7 @@ export async function startHttpServer(options?: HttpServerOptions): Promise<{
   registerNlpRoutes(server, dbManager)
   registerAiRoutes(server, dbManager, convManager)
   registerWebRoutes(server, dbManager, { pathProvider, nativeBinding })
+  registerPreferencesRoutes(server, pathProvider)
 
   initSync(server, dbManager, pathProvider, { port, host, token })
 

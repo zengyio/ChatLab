@@ -80,6 +80,8 @@ export interface MergeImportResult {
   error?: string
 }
 
+import { getSessionGapThreshold } from '@/composables/useUiConfig'
+
 /**
  * 会话与导入相关的全局状态
  */
@@ -283,9 +285,7 @@ export const useSessionStore = defineStore(
           currentSessionId.value = importResult.sessionId
 
           try {
-            const savedThreshold = localStorage.getItem('sessionGapThreshold')
-            const gapThreshold = savedThreshold ? parseInt(savedThreshold, 10) : 1800
-            await useSessionIndexService().generate(importResult.sessionId, gapThreshold)
+            await useSessionIndexService().generate(importResult.sessionId, getSessionGapThreshold())
           } catch (error) {
             console.error('自动生成会话索引失败:', error)
           }
@@ -416,9 +416,7 @@ export const useSessionStore = defineStore(
 
               // 即使取消了也要为已导入成功的文件生成会话索引
               try {
-                const savedThreshold = localStorage.getItem('sessionGapThreshold')
-                const gapThreshold = savedThreshold ? parseInt(savedThreshold, 10) : 1800
-                await useSessionIndexService().generate(importResult.sessionId, gapThreshold)
+                await useSessionIndexService().generate(importResult.sessionId, getSessionGapThreshold())
               } catch (error) {
                 console.error('自动生成会话索引失败:', error)
               }
@@ -440,9 +438,7 @@ export const useSessionStore = defineStore(
             // 自动生成会话索引（跳过如果已取消）
             if (!batchImportCancelled.value) {
               try {
-                const savedThreshold = localStorage.getItem('sessionGapThreshold')
-                const gapThreshold = savedThreshold ? parseInt(savedThreshold, 10) : 1800
-                await useSessionIndexService().generate(importResult.sessionId, gapThreshold)
+                await useSessionIndexService().generate(importResult.sessionId, getSessionGapThreshold())
               } catch (error) {
                 console.error('自动生成会话索引失败:', error)
               }
@@ -585,9 +581,7 @@ export const useSessionStore = defineStore(
         // 自动生成会话索引
         if (result.sessionId) {
           try {
-            const savedThreshold = localStorage.getItem('sessionGapThreshold')
-            const gapThreshold = savedThreshold ? parseInt(savedThreshold, 10) : 1800
-            await useSessionIndexService().generate(result.sessionId, gapThreshold)
+            await useSessionIndexService().generate(result.sessionId, getSessionGapThreshold())
           } catch (error) {
             console.error('自动生成会话索引失败:', error)
           }
@@ -807,9 +801,12 @@ export const useSessionStore = defineStore(
         storage: sessionStorage,
       },
       {
-        pick: ['pinnedSessionIds', 'filterType', 'sortField', 'sortOrder'],
+        pick: ['filterType', 'sortField', 'sortOrder'],
         storage: localStorage,
       },
     ],
+    backendPersist: {
+      pick: ['pinnedSessionIds'],
+    },
   }
 )

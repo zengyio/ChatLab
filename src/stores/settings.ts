@@ -10,8 +10,6 @@ import type { PreprocessConfig } from '@electron/preload/index'
 import { IS_ELECTRON } from '@/utils/platform'
 import { useAIService } from '@/services'
 
-const LOCALE_SET_KEY = 'chatlab_locale_set_by_user'
-
 export const useSettingsStore = defineStore(
   'settings',
   () => {
@@ -53,8 +51,6 @@ export const useSettingsStore = defineStore(
     async function setLocale(newLocale: LocaleType) {
       locale.value = newLocale
 
-      localStorage.setItem(LOCALE_SET_KEY, 'true')
-
       setI18nLocale(newLocale)
 
       dayjs.locale(getDayjsLocale(newLocale))
@@ -75,12 +71,7 @@ export const useSettingsStore = defineStore(
     async function initLocale() {
       const i18nLocale = getLocale()
       if (locale.value !== i18nLocale) {
-        const hasUserSetLocale = localStorage.getItem(LOCALE_SET_KEY)
-        if (!hasUserSetLocale) {
-          locale.value = i18nLocale
-        } else {
-          setI18nLocale(locale.value)
-        }
+        setI18nLocale(locale.value)
       }
 
       dayjs.locale(getDayjsLocale(locale.value))
@@ -102,6 +93,12 @@ export const useSettingsStore = defineStore(
     }
   },
   {
-    persist: true,
+    persist: {
+      pick: ['debugMode'],
+      storage: localStorage,
+    },
+    backendPersist: {
+      pick: ['aiPreprocessConfig'],
+    },
   }
 )
