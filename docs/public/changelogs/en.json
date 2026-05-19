@@ -1,5 +1,64 @@
 [
   {
+    "version": "0.20.0",
+    "date": "2026-05-19",
+    "summary": "This update unifies the core multi-platform architecture and improves AI, import, sync, and desktop build stability. It also prepares for the standalone Web, CLI, and MCP capabilities in the next release; please update before using the CLI so data can be pre-migrated.",
+    "changes": [
+      {
+        "type": "feat",
+        "items": [
+          "Add standalone CLI, HTTP API service, and MCP Server foundations for command-line use, Web, and AI agent integrations",
+          "Add a standalone Web build and one-command startup flow, including launching the Web UI from the CLI and opening the browser automatically",
+          "Support core Web-mode workflows, including chat import, demo import, session queries, member queries, search, and analysis",
+          "Connect Web mode to AI chat, model configuration, custom providers and models, context compression, and streamed event display",
+          "Upgrade imports to a shared streaming pipeline with multi-format parsing, incremental import, import analysis, and automatic session index generation",
+          "Add server-side capabilities for merge workflows, Markdown export, and session caching",
+          "Add the shared sync package and CLI automation support as groundwork for future multi-platform sync",
+          "Add backend persistence for preferences and automatically detect and migrate desktop data on first CLI run"
+        ]
+      },
+      {
+        "type": "fix",
+        "items": [
+          "Fix Web-mode issues around session indexes, CORS proxying, demo safeguards, and runtime errors",
+          "Fix the app version showing as empty in Web mode",
+          "Fix AI Agent evidence retrieval, Web event streaming, and error formatting issues",
+          "Fix inconsistencies between sync display and import logic",
+          "Fix ESM module resolution in CLI development mode",
+          "Fix cases where the CLI could not find existing desktop data after installation",
+          "Fix data migration path mismatches after extracting the Electron package",
+          "Fix packaged Worker crashes caused by an indirect dependency on the electron module",
+          "Fix Electron build, dependency installation, and better-sqlite3 native rebuild issues"
+        ]
+      },
+      {
+        "type": "refactor",
+        "items": [
+          "Move the project to a multi-platform workspace structure with apps/desktop, apps/cli, and shared packages",
+          "Extract parser, configuration, database adapters, queries, migrations, NLP, session cache, import, merge, export, and sync logic into shared modules",
+          "Extract AI Agent, tools, preprocessing, context compression, RAG, LLM configuration, assistant, and skill management into shared runtime capabilities",
+          "Unify AI tool naming, tool registration, and data access across Electron, CLI Web, and MCP",
+          "Unify core logic for data directories, message queries, member queries, session indexes, SQL execution, and import deduplication",
+          "Move the CLI from packages/server to apps/cli and complete the npm publishing build pipeline",
+          "Move frontend-only chart modules into src/features so packages only contain reusable shared libraries",
+          "Remove several Electron-side passthrough files and obsolete code to reduce duplicate implementations"
+        ]
+      },
+      {
+        "type": "build",
+        "items": [
+          "Upgrade Vite and related build tooling",
+          "Add CLI tsup builds, Web asset bundling, and npm publishing configuration",
+          "Adjust Electron desktop build settings and remove Linux desktop build targets"
+        ]
+      },
+      {
+        "type": "docs",
+        "items": ["Document versioning, commit scope conventions, and related development notes"]
+      }
+    ]
+  },
+  {
     "version": "0.19.0",
     "date": "2026-05-06",
     "summary": "This update adds AI context auto-compression, introduces demo data for new users, and improves model configuration and debugging.",
