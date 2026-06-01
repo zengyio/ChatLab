@@ -1,5 +1,31 @@
 [
   {
+    "version": "0.23.1",
+    "date": "2026-06-01",
+    "summary": "Adds a clb command alias and port conflict detection with actionable guidance. Fixes daemon silent exit and several UI issues in dark mode.",
+    "changes": [
+      {
+        "type": "feat",
+        "items": [
+          "Improve the page header and toolbar layout",
+          "[CLI] Detect port conflicts before startup and display clear guidance (switch port or run lsof) instead of a delayed EADDRINUSE error",
+          "[CLI] Add clb as a short alias for the chatlab command"
+        ]
+      },
+      {
+        "type": "fix",
+        "items": [
+          "Fix sidebar tooltip misplacement and Nuxt UI v4 API compatibility",
+          "Fix red background and incorrect z-index layering in the title bar under dark mode",
+          "Tighten AI message role parameter types and strengthen conversation test assertions",
+          "[CLI] Fix daemon entry point error that caused the service to exit silently after startup",
+          "[CLI] Improve error handling and messaging for port conflict detection",
+          "[CLI] Fix missing chatlab.fun reverse proxy route in web mode"
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.23.0",
     "date": "2026-05-31",
     "summary": "Overhauls message editing with a fork/regenerate model, adds per-model thinking level controls, unifies the CLI entry point, and fixes multiple reasoning detection and computation issues.",
